@@ -9,6 +9,7 @@ import Profile from './pages/Profile';
 import Explore from './pages/Explore';
 import Notifications from './pages/Notifications';
 import Messages from './pages/Messages';
+import Orion from './pages/Orion';
 import Landing from './pages/Landing';
 import Layout from './components/Layout';
 
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/explore" element={<Explore />} />
             <Route path="/notifications" element={<Notifications />} />
             <Route path="/messages" element={<Messages />} />
+            <Route path="/orion" element={<Orion />} />
             <Route path="/profile/:userId" element={<Profile />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

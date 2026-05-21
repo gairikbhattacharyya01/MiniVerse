@@ -98,7 +98,7 @@ export default function Layout({ user: authUser }: LayoutProps) {
     { name: 'Explore', path: '/explore', icon: Hash },
     { name: 'Notifications', path: '/notifications', icon: Bell, badge: unreadCount },
     { name: 'Messages', path: '/messages', icon: Mail },
-    { name: 'Orion AI', path: 'https://tirthaai.netlify.app/', icon: Sparkles, color: 'text-indigo-400', external: true },
+    { name: 'Orion AI', path: '/orion', icon: Sparkles, color: 'text-indigo-400' },
     { name: 'Profile', path: `/profile/${authUser?.uid}`, icon: User },
   ];
 

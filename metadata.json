@@ -2,5 +2,7 @@
   "name": "MiniVerse",
   "description": "A feature-rich social media platform inspired by Twitter, featuring feeds, profiles, messaging, trending topics, and an AI assistant.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
