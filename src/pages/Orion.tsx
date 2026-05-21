@@ -111,6 +111,9 @@ export default function Orion() {
 
       if (!response.ok) {
         const serverError = data?.error || '';
+        if (serverError.includes('CONFIG_ERROR')) {
+          throw new Error('CONFIG_ERROR');
+        }
         if (serverError.toLowerCase().includes('api key expired') || serverError.toLowerCase().includes('key invalid') || serverError.toLowerCase().includes('api_key')) {
           throw new Error('API_KEY_EXPIRED');
         }
@@ -129,6 +132,8 @@ export default function Orion() {
       console.error(err);
       if (err.message === 'API_KEY_EXPIRED') {
         setError('Your Gemini API key appears to be expired or invalid. Please check your workspace Settings under the "Secrets" panel to configure or renew your GEMINI_API_KEY, then refresh the page to resume chatting.');
+      } else if (err.message === 'CONFIG_ERROR') {
+        setError('The GEMINI_API_KEY is not defined on Netlify. Please head to your Netlify Dashboard under Site Settings -> Environment Variables and register a new variable named GEMINI_API_KEY with your valid Gemini key.');
       } else {
         setError(err.message || 'An error occurred while connecting to Orion.');
       }
@@ -267,7 +272,7 @@ export default function Orion() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="max-w-md mx-auto"
               >
-                {error.includes('Settings') ? (
+                {error.includes('Settings') || error.includes('Netlify') ? (
                   <div className="p-5 bg-indigo-500/10 border border-indigo-500/20 rounded-3xl text-left shadow-xl shadow-indigo-950/20 animate-in fade-in zoom-in-95">
                     <div className="flex gap-3.5 items-start">
                       <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 flex items-center justify-center shrink-0 border border-indigo-500/35">

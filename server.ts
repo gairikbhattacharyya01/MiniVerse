@@ -6,15 +6,25 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Initialize Gemini SDK with telemetry User-Agent header as required
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
+// Helper to lazily initialize GoogleGenAI with clear error handling
+let aiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  if (!aiClient) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('GEMINI_API_KEY is missing. Please configure it in your environment variables.');
     }
+    aiClient = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
   }
-});
+  return aiClient;
+}
 
 async function startServer() {
   const app = express();
@@ -40,7 +50,7 @@ async function startServer() {
       }));
 
       // Create the chat session on server
-      const chat = ai.chats.create({
+      const chat = getGeminiClient().chats.create({
         model: 'gemini-3.5-flash',
         history: chatHistory,
         config: {

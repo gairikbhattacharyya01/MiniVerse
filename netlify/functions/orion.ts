@@ -1,14 +1,25 @@
 import { Handler } from '@netlify/functions';
 import { GoogleGenAI } from '@google/genai';
 
-const ai = new GoogleGenAI({
-  apiKey: process.env.GEMINI_API_KEY,
-  httpOptions: {
-    headers: {
-      'User-Agent': 'aistudio-build',
-    }
+// Helper to lazily initialize GoogleGenAI with clear error handling
+let aiClient: GoogleGenAI | null = null;
+function getGeminiClient(): GoogleGenAI {
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error('CONFIG_ERROR: GEMINI_API_KEY environment variable is not defined on Netlify. Please head to your Netlify dashboard under Site Settings -> Environment variables and add GEMINI_API_KEY with your valid Gemini API key.');
   }
-});
+  if (!aiClient) {
+    aiClient = new GoogleGenAI({
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+  }
+  return aiClient;
+}
 
 export const handler: Handler = async (event, context) => {
   // Handle CORS Preflight request
@@ -55,8 +66,22 @@ export const handler: Handler = async (event, context) => {
       parts: [{ text: h.text || '' }]
     }));
 
+    let client;
+    try {
+      client = getGeminiClient();
+    } catch (confError: any) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ error: confError.message })
+      };
+    }
+
     // Create the chat session on server
-    const chat = ai.chats.create({
+    const chat = client.chats.create({
       model: 'gemini-3.5-flash',
       history: chatHistory,
       config: {
