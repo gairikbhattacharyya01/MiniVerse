@@ -1,0 +1,208 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --color-primary: #818cf8;
+  --color-secondary: #a855f7;
+}
+
+:root {
+  --glass: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-hover: rgba(255, 255, 255, 0.12);
+  --glass-active: rgba(255, 255, 255, 0.15);
+  --bg-gradient: radial-gradient(at 0% 0%, #1e1b4b 0%, transparent 50%), 
+                 radial-gradient(at 100% 0%, #312e81 0%, transparent 50%), 
+                 radial-gradient(at 100% 100%, #1e1b4b 0%, transparent 50%), 
+                 radial-gradient(at 0% 100%, #4338ca 0%, transparent 50%), 
+                 #0f172a;
+}
+
+body {
+  background: var(--bg-gradient);
+  color: #f8fafc;
+  min-height: 100vh;
+  font-family: var(--font-sans);
+}
+
+.glass {
+  background: var(--glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-hover:hover {
+  background: var(--glass-hover);
+}
+
+.ai-sparkle {
+  background: linear-gradient(90deg, #fbbf24, #f472b6, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  transition: all 0.2s ease;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root {
+  --glass-bg: rgba(255, 255, 255, 0.07);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(16px);
+  --accent: #818cf8;
+}
+
+body {
+  @apply font-sans text-slate-50 antialiased;
+  background: radial-gradient(at 0% 0%, #1e1b4b 0%, transparent 50%),
+              radial-gradient(at 100% 0%, #312e81 0%, transparent 50%),
+              radial-gradient(at 100% 100%, #1e1b4b 0%, transparent 50%),
+              radial-gradient(at 0% 100%, #4338ca 0%, transparent 50%),
+              #0f172a;
+  min-height: 100vh;
+}
+
+.glass {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+}
+
+.glass-hover:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  @apply font-semibold transition-all duration-200 active:scale-95 disabled:opacity-50;
+}
+
+.text-glow {
+  text-shadow: 0 0 10px rgba(129, 140, 248, 0.4), 0 0 20px rgba(129, 140, 248, 0.2);
+}
+
+.chip {
+  @apply px-2 py-1 bg-white/5 hover:bg-white/10 rounded-full text-sm transition-colors flex items-center justify-center cursor-pointer;
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+.ai-sparkle {
+  background: linear-gradient(90deg, #fbbf24, #f472b6, #818cf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  @apply font-extrabold;
+}
+
+.nav-active {
+  background: rgba(255, 255, 255, 0.15);
+  border-left: 3px solid var(--accent);
+}
+
+/* Custom Scrollbar for Glass UI */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* PARTICLES */
+.particles {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 0;
+}
+
+.particles span {
+  position: absolute;
+  display: block;
+  width: 6px;
+  height: 6px;
+  background: #00ffd5;
+  border-radius: 50%;
+  box-shadow: 0 0 15px #00ffd5;
+  opacity: 0.5;
+  animation: float 15s linear infinite;
+}
+
+@keyframes float {
+  from {
+    transform: translateY(105vh);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.6;
+  }
+  to {
+    transform: translateY(-20vh);
+    opacity: 0;
+  }
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 10px rgba(0,255,213,0.3);
+  }
+  to {
+    text-shadow: 0 0 25px rgba(0,255,213,0.8);
+  }
+}
+
+.animate-logo-glow {
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes slideTag {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(50px);
+  }
+}
+
+.animate-tag {
+  animation: slideTag 4s infinite;
+}
+

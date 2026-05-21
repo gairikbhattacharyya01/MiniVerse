@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "username": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "bio": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "followers": { "type": "array", "items": { "type": "string" } },
+        "following": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email"]
+    },
+    "Post": {
+      "title": "Post",
+      "description": "Social media post",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "media": { "type": "string" },
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "likes": { "type": "array", "items": { "type": "string" } },
+        "commentsCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Post comment",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "User notification",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["like", "comment", "follow", "mention"] },
+        "fromUserId": { "type": "string" },
+        "fromUserName": { "type": "string" },
+        "toUserId": { "type": "string" },
+        "postId": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Direct message",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": { "schema": "User", "description": "Users collection" },
+    "/posts/{postId}": { "schema": "Post", "description": "Posts collection" },
+    "/posts/{postId}/comments/{commentId}": { "schema": "Comment", "description": "Comments subcollection" },
+    "/notifications/{notificationId}": { "schema": "Notification", "description": "Notifications collection" },
+    "/messages/{messageId}": { "schema": "Message", "description": "Messages collection" }
+  }
+}
