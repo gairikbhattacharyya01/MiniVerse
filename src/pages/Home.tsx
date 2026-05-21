@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { auth, db, CLOUDINARY_CONFIG, createNotification, handleFirestoreError, OperationType, uploadMultipleToCloudinary } from '../lib/firebase';
 import { Post as PostType, Comment as CommentType } from '../types';
+import ShareButton from '../components/ShareButton';
 import { 
   Image as ImageIcon, 
   MessageCircle,
@@ -458,9 +459,12 @@ function PostItem({ post }: { post: PostType }) {
               <Heart size={18} fill={liked ? 'currentColor' : 'none'} />
               <span>{likesCount}</span>
             </button>
-            <button className="hover:text-indigo-400 transition-colors">
-              <Share size={18} />
-            </button>
+            <ShareButton 
+              postId={post.id} 
+              postText={post.text} 
+              userId={post.userId} 
+              displayName={post.displayName} 
+            />
           </div>
 
           {showComments && (

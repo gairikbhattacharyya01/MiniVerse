@@ -20,6 +20,8 @@ import {
 import { updateProfile } from 'firebase/auth';
 import { auth, db, uploadToCloudinary, createNotification, handleFirestoreError, OperationType } from '../lib/firebase';
 import Logo from '../components/Logo';
+import ShareButton from '../components/ShareButton';
+import ConnectionsModal from '../components/ConnectionsModal';
 import { UserProfile, Post as PostType } from '../types';
 import { formatDistanceToNow, format } from 'date-fns';
 import { 
@@ -49,6 +51,11 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [isFollowing, setIsFollowing] = useState(false);
   
+  // Connections Modal state
+  const [connectionsModalOpen, setConnectionsModalOpen] = useState(false);
+  const [connectionsModalTitle, setConnectionsModalTitle] = useState('');
+  const [connectionsModalUserIds, setConnectionsModalUserIds] = useState<string[]>([]);
+  
   // Edit form state
   const [editName, setEditName] = useState('');
   const [editBio, setEditBio] = useState('');
@@ -66,26 +73,37 @@ export default function Profile() {
   useEffect(() => {
     if (!userId) return;
 
-    const fetchProfile = async () => {
-      setLoading(true);
-      const userDoc = await getDoc(doc(db, 'users', userId));
-      if (userDoc.exists()) {
-        const data = userDoc.data() as UserProfile;
+    setLoading(true);
+    const unsubscribe = onSnapshot(doc(db, 'users', userId), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as UserProfile;
         setProfile(data);
-        setEditName(data.name || '');
-        setEditBio(data.bio || '');
-        setEditCity(data.city || '');
-        setEditState(data.state || '');
+        setEditName(prev => isEditing ? prev : (data.name || ''));
+        setEditBio(prev => isEditing ? prev : (data.bio || ''));
+        setEditCity(prev => isEditing ? prev : (data.city || ''));
+        setEditState(prev => isEditing ? prev : (data.state || ''));
         
         if (auth.currentUser) {
           setIsFollowing(data.followers?.includes(auth.currentUser.uid) || false);
         }
+
+        // Dynamically update the user IDs inside the open ConnectionsModal as numbers change!
+        if (connectionsModalOpen) {
+          if (connectionsModalTitle === 'Following') {
+            setConnectionsModalUserIds(data.following || []);
+          } else if (connectionsModalTitle === 'Followers') {
+            setConnectionsModalUserIds(data.followers || []);
+          }
+        }
       }
       setLoading(false);
-    };
+    }, (error) => {
+      console.error("Profile snapshot error:", error);
+      setLoading(false);
+    });
 
-    fetchProfile();
-  }, [userId]);
+    return unsubscribe;
+  }, [userId, isEditing, connectionsModalOpen, connectionsModalTitle]);
 
   useEffect(() => {
     if (!userId) return;
@@ -442,14 +460,28 @@ export default function Profile() {
               </div>
 
               <div className="flex gap-4 text-[14px]">
-                <div className="flex gap-1 hover:underline cursor-pointer group">
+                <button 
+                  onClick={() => {
+                    setConnectionsModalTitle('Following');
+                    setConnectionsModalUserIds(profile.following || []);
+                    setConnectionsModalOpen(true);
+                  }}
+                  className="flex gap-1 hover:underline cursor-pointer group border-none bg-transparent p-0 text-left focus:outline-none"
+                >
                   <span className="font-bold text-white">{profile.following?.length || 0}</span>
-                  <span className="text-white/50">Following</span>
-                </div>
-                <div className="flex gap-1 hover:underline cursor-pointer group">
+                  <span className="text-white/50 group-hover:text-indigo-400 transition-colors">Following</span>
+                </button>
+                <button 
+                  onClick={() => {
+                    setConnectionsModalTitle('Followers');
+                    setConnectionsModalUserIds(profile.followers || []);
+                    setConnectionsModalOpen(true);
+                  }}
+                  className="flex gap-1 hover:underline cursor-pointer group border-none bg-transparent p-0 text-left focus:outline-none"
+                >
                   <span className="font-bold text-white">{profile.followers?.length || 0}</span>
-                  <span className="text-white/50">Followers</span>
-                </div>
+                  <span className="text-white/50 group-hover:text-indigo-400 transition-colors">Followers</span>
+                </button>
               </div>
             </div>
           )}
@@ -537,7 +569,12 @@ export default function Profile() {
                         <Heart size={18} fill={post.likes?.includes(auth.currentUser?.uid || '') ? 'currentColor' : 'none'} />
                         <span className="text-xs">{post.likes?.length || 0}</span>
                       </button>
-                      <button className="hover:text-indigo-400 transition-colors"><Share size={18} /></button>
+                      <ShareButton 
+                        postId={post.id} 
+                        postText={post.text || ''} 
+                        userId={post.userId} 
+                        displayName={post.displayName} 
+                      />
                     </div>
                   )}
                 </div>
@@ -552,6 +589,13 @@ export default function Profile() {
           </div>
         )}
       </div>
+
+      <ConnectionsModal 
+        isOpen={connectionsModalOpen}
+        onClose={() => setConnectionsModalOpen(false)}
+        userIds={connectionsModalUserIds}
+        title={connectionsModalTitle}
+      />
     </div>
   );
 }

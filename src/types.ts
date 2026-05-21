@@ -54,6 +54,7 @@ export interface Message {
   senderId: string;
   receiverId: string;
   createdAt: any;
+  edited?: boolean;
 }
 
 export interface Notification {

@@ -11,12 +11,16 @@ import {
   getDocs,
   limit,
   or,
-  and
+  and,
+  doc,
+  updateDoc,
+  deleteDoc
 } from 'firebase/firestore';
 import { db, auth } from '../lib/firebase';
 import { Message as MessageType, UserProfile } from '../types';
 import { Mail, Search, Edit3, Send, ChevronLeft, User } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
+import MessageBubble from '../components/MessageBubble';
 
 export default function Messages() {
   const location = useLocation();
@@ -143,6 +147,27 @@ export default function Messages() {
     });
   };
 
+  const handleEditMessage = async (messageId: string, newText: string) => {
+    try {
+      const messageRef = doc(db, 'messages', messageId);
+      await updateDoc(messageRef, {
+        text: newText,
+        edited: true
+      });
+    } catch (err) {
+      console.error("Error editing message:", err);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      const messageRef = doc(db, 'messages', messageId);
+      await deleteDoc(messageRef);
+    } catch (err) {
+      console.error("Error deleting message:", err);
+    }
+  };
+
   return (
     <div className="flex-1 flex overflow-hidden h-full">
       {/* Conversations List */}
@@ -236,17 +261,16 @@ export default function Messages() {
           </header>
 
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
-            {messages.map((m, i) => {
+            {messages.map((m) => {
               const isMe = m.senderId === auth.currentUser?.uid;
               return (
-                <div key={m.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`max-w-[70%] p-3 px-5 rounded-2xl text-sm ${isMe ? 'bg-indigo-600 rounded-tr-none' : 'glass rounded-tl-none'}`}>
-                    {m.text}
-                    <div className={`text-[9px] mt-1 opacity-40 ${isMe ? 'text-right' : 'text-left'}`}>
-                      {m.createdAt ? formatDistanceToNow(m.createdAt.toDate()) : 'sending...'}
-                    </div>
-                  </div>
-                </div>
+                <MessageBubble 
+                  key={m.id} 
+                  message={m} 
+                  isMe={isMe} 
+                  onEdit={handleEditMessage} 
+                  onDelete={handleDeleteMessage} 
+                />
               );
             })}
             <div ref={chatEndRef} />
