@@ -94,7 +94,7 @@ export async function uploadMultipleToCloudinary(files: File[]) {
   return Promise.all(files.map(file => uploadToCloudinary(file)));
 }
 
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, serverTimestamp, query, where, getDocs, limit } from 'firebase/firestore';
 
 export async function createNotification(data: {
   type: 'like' | 'comment' | 'follow' | 'mention';
@@ -113,5 +113,57 @@ export async function createNotification(data: {
     });
   } catch (err) {
     console.error("Notification error:", err);
+  }
+}
+
+export async function handleMentions(
+  text: string, 
+  fromUserId: string, 
+  fromUserName: string, 
+  postId: string
+) {
+  if (!text) return;
+  
+  // Custom regex pattern to match @username (handles letters, numbers, underscores, dashes, dots)
+  const matches = text.match(/@([a-zA-Z0-9_.-]+)/g);
+  if (!matches) return;
+
+  const uniqueUsernames = Array.from(new Set(
+    matches.map(m => m.slice(1).trim().toLowerCase())
+  ));
+
+  for (const username of uniqueUsernames) {
+    try {
+      const usersRef = collection(db, 'users');
+      // Primary check: exact lowercase username match
+      const q = query(usersRef, where('username', '==', username), limit(1));
+      const snap = await getDocs(q);
+      
+      let targetUserDoc = snap.empty ? null : snap.docs[0];
+      
+      // Secondary check: relaxed client-side lookup if database is small (up to 150 users)
+      if (!targetUserDoc) {
+        const fallbackSnap = await getDocs(query(usersRef, limit(150)));
+        targetUserDoc = fallbackSnap.docs.find(doc => {
+          const u = doc.data();
+          return u.username?.toLowerCase() === username || u.name?.toLowerCase() === username;
+        }) || null;
+      }
+      
+      if (targetUserDoc) {
+        const toUserId = targetUserDoc.data().uid;
+        if (toUserId && toUserId !== fromUserId) {
+          await createNotification({
+            type: 'mention',
+            fromUserId,
+            fromUserName,
+            toUserId,
+            postId
+          });
+        }
+      }
+    } catch (err) {
+      console.error("Error processing mention for username:", username, err);
+    }
   }
 }

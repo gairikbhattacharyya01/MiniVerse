@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { 
   createUserWithEmailAndPassword, 
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { 
   doc, 
@@ -10,14 +11,17 @@ import {
   serverTimestamp 
 } from 'firebase/firestore';
 import { auth, db } from '../lib/firebase';
+import { Eye, EyeOff, MailCheck } from 'lucide-react';
 
 export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [birthdate, setBirthdate] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [verificationSent, setVerificationSent] = useState(false);
   const [isLight, setIsLight] = useState(() => localStorage.getItem("theme") === "light");
   const navigate = useNavigate();
 
@@ -90,7 +94,9 @@ export default function Signup() {
         createdAt: serverTimestamp()
       });
 
-      navigate('/');
+      // Send verification email
+      await sendEmailVerification(user);
+      setVerificationSent(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -150,74 +156,113 @@ export default function Signup() {
         {/* RIGHT PANEL */}
         <div className="flex-1 flex justify-center items-center px-6 md:px-20 py-12 lg:py-0">
           <div className={`w-full max-w-[430px] p-8 md:p-10 rounded-[30px] border backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-500 transition-all duration-500 ${isLight ? 'bg-white/55 border-slate-200 shadow-slate-300/40 text-[#111111]' : 'bg-white/5 border-white/10 shadow-black/25 text-white'}`}>
-            <h2 className={`text-3xl font-black mb-8 tracking-tight ${isLight ? 'text-slate-800' : 'text-white'}`}>Create Account</h2>
+            {verificationSent ? (
+              <div className="text-center space-y-6 py-4 animate-in fade-in zoom-in-95 duration-300">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mx-auto text-emerald-400">
+                  <MailCheck size={36} className="animate-bounce" style={{ animationDuration: '3s' }} />
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold tracking-tight text-emerald-400">Verification Sent!</h3>
+                  <p className={`text-xs leading-relaxed font-sans ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>
+                    We have successfully created your account and sent a verification link to your email:<br />
+                    <span className="font-bold text-indigo-450 text-[#1d9bf0]">{email}</span>
+                  </p>
+                  <p className={`text-[11px] leading-relaxed font-sans ${isLight ? 'text-slate-500' : 'text-white/50'}`}>
+                    Please check your inbox (and junk/spam folder) and follow the instructions to verify your account.
+                  </p>
+                </div>
 
-            {error && (
-              <div className="bg-red-500/20 border border-red-500/30 text-red-200 text-sm p-4 rounded-xl mb-6">
-                {error}
+                <div className="pt-4">
+                  <button 
+                    onClick={() => navigate('/')}
+                    className="w-full py-4 rounded-full bg-gradient-to-r from-[#1d9bf0] to-[#00ffd5] text-white font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-lg shadow-[#00ffd5]/10"
+                  >
+                    Enter MiniVerse
+                  </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <h2 className={`text-3xl font-black mb-8 tracking-tight ${isLight ? 'text-slate-800' : 'text-white'}`}>Create Account</h2>
+
+                {error && (
+                  <div className="bg-red-500/20 border border-red-500/30 text-red-200 text-sm p-4 rounded-xl mb-6">
+                    {error}
+                  </div>
+                )}
+
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-1">
+                    <input 
+                      type="text"
+                      required
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Full Name"
+                      className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all placeholder-slate-500 ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className={`text-[11px] font-bold uppercase ml-2 block mb-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Birthdate</label>
+                    <input 
+                      type="date"
+                      required
+                      value={birthdate}
+                      onChange={(e) => setBirthdate(e.target.value)}
+                      className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <input 
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Email"
+                      className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all placeholder-slate-500 ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
+                    />
+                  </div>
+
+                  <div className="space-y-1">
+                    <div className="relative">
+                      <input 
+                        type={showPassword ? "text" : "password"}
+                        required
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        placeholder="Password"
+                        className={`w-full border rounded-xl pl-5 pr-12 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all placeholder-slate-500 ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 transition-colors focus:outline-none cursor-pointer"
+                        title={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full py-4 mt-6 rounded-full bg-gradient-to-r from-[#1d9bf0] to-[#00ffd5] text-white font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-lg shadow-[#00ffd5]/10"
+                  >
+                    {loading ? 'Creating...' : 'Signup'}
+                  </button>
+                </form>
+
+                <div className={`mt-8 text-center text-sm font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
+                  Already have an account?{' '}
+                  <Link to="/login" className="text-[#1d9bf0] hover:underline font-semibold ml-1">
+                    Login
+                  </Link>
+                </div>
+              </>
             )}
-
-            <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-1">
-                <input 
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Full Name"
-                  className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all placeholder-slate-500 ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className={`text-[11px] font-bold uppercase ml-2 block mb-1 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Birthdate</label>
-                <input 
-                  type="date"
-                  required
-                  value={birthdate}
-                  onChange={(e) => setBirthdate(e.target.value)}
-                  className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <input 
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Email"
-                  className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all placeholder-slate-500 ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
-                />
-              </div>
-
-              <div className="space-y-1">
-                <input 
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Password"
-                  className={`w-full border rounded-xl px-5 py-4 focus:outline-none focus:border-[#00ffd5] focus:ring-1 focus:ring-[#00ffd5] transition-all placeholder-slate-500 ${isLight ? 'bg-white/40 border-slate-300 text-[#111111]' : 'bg-white/5 border-white/10 text-white'}`}
-                />
-              </div>
-
-              <button 
-                type="submit"
-                disabled={loading}
-                className="w-full py-4 mt-6 rounded-full bg-gradient-to-r from-[#1d9bf0] to-[#00ffd5] text-white font-bold text-lg hover:scale-[1.02] active:scale-95 transition-all duration-300 shadow-lg shadow-[#00ffd5]/10"
-              >
-                {loading ? 'Creating...' : 'Signup'}
-              </button>
-            </form>
-
-            <div className={`mt-8 text-center text-sm font-medium ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-              Already have an account?{' '}
-              <Link to="/login" className="text-[#1d9bf0] hover:underline font-semibold ml-1">
-                Login
-              </Link>
-            </div>
           </div>
         </div>
       </div>

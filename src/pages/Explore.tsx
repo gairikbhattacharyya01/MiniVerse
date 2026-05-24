@@ -11,6 +11,7 @@ import { Post as PostType } from '../types';
 import { Hash, TrendingUp, Heart, MessageCircle, Star } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { Link } from 'react-router-dom';
+import MentionText from '../components/MentionText';
 
 export default function Explore() {
   const [trendingPosts, setTrendingPosts] = useState<PostType[]>([]);
@@ -78,7 +79,9 @@ export default function Explore() {
                     <Link to={`/profile/${post.userId}`} className="font-bold hover:underline">{post.displayName}</Link>
                     <span className="text-xs opacity-40">· {post.createdAt ? formatDistanceToNow(post.createdAt.toDate()) : 'recently'}</span>
                   </div>
-                  <p className="mt-2 text-[15px] opacity-90 line-clamp-3 leading-relaxed">{post.text}</p>
+                  <div className="mt-2 text-[15px] opacity-90 line-clamp-3 leading-relaxed">
+                    <MentionText text={post.text} />
+                  </div>
                   <div className="flex gap-4 mt-4 text-white/40 text-[13px]">
                     <div className="flex items-center gap-1.5"><Heart size={16}/> {post.likes?.length || 0}</div>
                     <div className="flex items-center gap-1.5"><MessageCircle size={16}/> {post.commentsCount || 0}</div>

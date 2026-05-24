@@ -15,39 +15,44 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
     // --- COLLECTIONS ---
 
     // GLOBAL COMMENTS (Collection Group Query support)
     match /{path=**}/comments/{commentId} {
-      allow read: if isSignedIn();
+      allow read: if isVerifiedUser();
     }
 
     // USERS
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow create, update: if isOwner(userId);
+      // Allow profile creation upon initial signup before verification is completed.
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) && isVerifiedUser();
     }
 
     // POSTS
     match /posts/{postId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read: if isVerifiedUser();
+      allow create: if isVerifiedUser() && request.resource.data.userId == request.auth.uid;
       
-      // Allow general updates for likes/reposts/commentsCount by any signed-in user
-      // In a production app, you'd restrict which fields can be updated by whom.
-      allow update: if isSignedIn();
+      // Allow general updates for likes/reposts/commentsCount by verified users
+      allow update: if isVerifiedUser();
 
       // Allow deletion by the post owner
-      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow delete: if isVerifiedUser() && resource.data.userId == request.auth.uid;
 
       // COMMENTS (Subcollection)
       match /comments/{commentId} {
-        allow read: if isSignedIn();
-        allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
-        allow update: if isSignedIn() && resource.data.userId == request.auth.uid;
+        allow read: if isVerifiedUser();
+        allow create: if isVerifiedUser() && request.resource.data.userId == request.auth.uid;
+        allow update: if isVerifiedUser() && resource.data.userId == request.auth.uid;
         
         // Deletion allowed for comment owner OR post owner
-        allow delete: if isSignedIn() && (
+        allow delete: if isVerifiedUser() && (
           resource.data.userId == request.auth.uid || 
           get(/databases/$(database)/documents/posts/$(postId)).data.userId == request.auth.uid
         );
@@ -56,14 +61,14 @@ service cloud.firestore {
 
     // NOTIFICATIONS
     match /notifications/{notificationId} {
-      allow read, update, delete: if isSignedIn() && resource.data.toUserId == request.auth.uid;
-      allow create: if isSignedIn();
+      allow read, update, delete: if isVerifiedUser() && resource.data.toUserId == request.auth.uid;
+      allow create: if isSignedIn(); // Allow system or other users to trigger notifications
     }
 
     // MESSAGES
     match /messages/{messageId} {
-      allow read: if isSignedIn() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.senderId == request.auth.uid;
+      allow read: if isVerifiedUser() && (resource.data.senderId == request.auth.uid || resource.data.receiverId == request.auth.uid);
+      allow create: if isVerifiedUser() && request.resource.data.senderId == request.auth.uid;
     }
   }
 }

@@ -119,18 +119,30 @@ export default function Messages() {
 
   const handleSearch = async (val: string) => {
     setSearchTerm(val);
-    if (val.length < 2) {
+    if (val.trim().length < 2) {
       setSearchResults([]);
       return;
     }
-    const q = query(
-      collection(db, 'users'),
-      where('username', '>=', val.toLowerCase()),
-      where('username', '<=', val.toLowerCase() + '\uf8ff'),
-      limit(5)
-    );
-    const snap = await getDocs(q);
-    setSearchResults(snap.docs.map(d => d.data() as UserProfile));
+    try {
+      const usersRef = collection(db, 'users');
+      const snap = await getDocs(query(usersRef, limit(300)));
+      const allUsers = snap.docs.map(d => d.data() as UserProfile);
+      
+      const searchLower = val.toLowerCase().trim();
+      const filtered = allUsers.filter(u => {
+        // Exclude current user from candidate search results if they are chatting with themselves
+        if (u.uid === auth.currentUser?.uid) return false;
+        
+        const nameMatch = u.name?.toLowerCase().includes(searchLower);
+        const usernameMatch = u.username?.toLowerCase().includes(searchLower);
+        const emailMatch = u.email?.toLowerCase().includes(searchLower);
+        return nameMatch || usernameMatch || emailMatch;
+      });
+      
+      setSearchResults(filtered.slice(0, 8));
+    } catch (err) {
+      console.error("Search error in Messages:", err);
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {

@@ -14,9 +14,10 @@ import {
   deleteDoc,
   increment
 } from 'firebase/firestore';
-import { auth, db, CLOUDINARY_CONFIG, createNotification, handleFirestoreError, OperationType, uploadMultipleToCloudinary } from '../lib/firebase';
+import { auth, db, CLOUDINARY_CONFIG, createNotification, handleFirestoreError, OperationType, uploadMultipleToCloudinary, handleMentions } from '../lib/firebase';
 import { Post as PostType, Comment as CommentType } from '../types';
 import ShareButton from '../components/ShareButton';
+import MentionText from '../components/MentionText';
 import { 
   Image as ImageIcon, 
   MessageCircle,
@@ -63,7 +64,7 @@ export default function Home() {
         mediaItems = await uploadMultipleToCloudinary(imageFiles);
       }
 
-      await addDoc(collection(db, 'posts'), {
+      const docRef = await addDoc(collection(db, 'posts'), {
         text: newPost,
         media: mediaItems.length > 0 ? mediaItems[0].url : '', // Backward compatibility
         mediaItems: mediaItems,
@@ -75,6 +76,15 @@ export default function Home() {
         commentsCount: 0,
         createdAt: serverTimestamp()
       });
+
+      if (auth.currentUser && newPost.trim()) {
+        await handleMentions(
+          newPost,
+          auth.currentUser.uid,
+          auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Someone',
+          docRef.id
+        );
+      }
 
       setNewPost('');
       setImageFiles([]);
@@ -312,6 +322,14 @@ function PostItem({ post }: { post: PostType }) {
   const handleUpdate = async () => {
     if (!editText.trim()) return;
     await updateDoc(doc(db, 'posts', post.id), { text: editText });
+    if (auth.currentUser) {
+      await handleMentions(
+        editText,
+        auth.currentUser.uid,
+        auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Someone',
+        post.id
+      );
+    }
     setIsEditing(false);
   };
 
@@ -333,6 +351,14 @@ function PostItem({ post }: { post: PostType }) {
       await updateDoc(doc(db, 'posts', post.id), {
         commentsCount: increment(1)
       });
+
+      // Handle mentions in comment text
+      await handleMentions(
+        newComment,
+        auth.currentUser.uid,
+        auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Someone',
+        post.id
+      );
 
       if (post.userId !== auth.currentUser.uid) {
         await createNotification({
@@ -415,7 +441,9 @@ function PostItem({ post }: { post: PostType }) {
               </div>
             </div>
           ) : (
-            <p className="mt-2 text-[15px] opacity-90 leading-relaxed whitespace-pre-wrap">{post.text}</p>
+            <p className="mt-2 text-[15px] opacity-90 leading-relaxed whitespace-pre-wrap">
+              <MentionText text={post.text} />
+            </p>
           )}
           
           {post.mediaItems && post.mediaItems.length > 0 ? (
@@ -534,6 +562,14 @@ function CommentItem({ comment, postId, postOwnerId }: { comment: CommentType, p
   const handleUpdate = async () => {
     if (!editText.trim()) return;
     await updateDoc(doc(db, 'posts', postId, 'comments', comment.id), { text: editText });
+    if (auth.currentUser) {
+      await handleMentions(
+        editText,
+        auth.currentUser.uid,
+        auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Someone',
+        postId
+      );
+    }
     setIsEditing(false);
   };
 
@@ -596,7 +632,9 @@ function CommentItem({ comment, postId, postOwnerId }: { comment: CommentType, p
             </div>
           </div>
         ) : (
-          <p className="opacity-80 leading-relaxed">{comment.text}</p>
+          <p className="opacity-80 leading-relaxed">
+            <MentionText text={comment.text} />
+          </p>
         )}
       </div>
     </div>
