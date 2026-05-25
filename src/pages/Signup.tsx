@@ -105,7 +105,7 @@ export default function Signup() {
   };
 
   return (
-    <div className={`relative min-h-screen overflow-hidden font-sans transition-all duration-500 bg-gradient-to-br ${isLight ? 'from-[#f7f3eb] to-[#e8e0d4] text-[#111111]' : 'from-[#000000] to-[#071a26] text-white'}`}>
+    <div className={`relative min-h-screen overflow-y-auto font-sans transition-all duration-500 bg-gradient-to-br ${isLight ? 'from-[#f7f3eb] to-[#e8e0d4] text-[#111111]' : 'from-[#000000] to-[#071a26] text-white'}`}>
       
       {/* THEME TOGGLE BUTTON */}
       <button 

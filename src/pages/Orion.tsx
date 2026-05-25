@@ -157,7 +157,7 @@ export default function Orion() {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-[calc(100vh-4rem)] md:h-screen max-h-screen bg-[#0f172a] text-white">
+    <div className="flex-1 flex flex-col h-full max-h-full bg-[#0f172a] text-white">
       
       {/* Upper header summary panel */}
       <header className="px-6 py-4 border-b border-white/10 flex items-center justify-between shrink-0 bg-slate-950/20 backdrop-blur-md">

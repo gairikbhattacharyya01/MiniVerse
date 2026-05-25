@@ -53,7 +53,7 @@ export default function Landing() {
   }, [isLight]);
 
   return (
-    <div className={`relative min-h-screen overflow-hidden font-sans transition-all duration-500 bg-gradient-to-br ${isLight ? 'from-[#f5efe6] to-[#e6dccf] text-[#1a1a1a]' : 'from-[#000000] to-[#071a26] text-white'}`}>
+    <div className={`relative min-h-screen overflow-y-auto font-sans transition-all duration-500 bg-gradient-to-br ${isLight ? 'from-[#f5efe6] to-[#e6dccf] text-[#1a1a1a]' : 'from-[#000000] to-[#071a26] text-white'}`}>
       
       {/* THEME TOGGLE BUTTON */}
       <button 

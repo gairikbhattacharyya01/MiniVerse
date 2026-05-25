@@ -24,6 +24,7 @@ import ShareButton from '../components/ShareButton';
 import ConnectionsModal from '../components/ConnectionsModal';
 import { UserProfile, Post as PostType } from '../types';
 import MentionText from '../components/MentionText';
+import PostItem from '../components/PostItem';
 import { formatDistanceToNow, format } from 'date-fns';
 import { 
   MapPin, 
@@ -553,130 +554,113 @@ export default function Profile() {
       {/* Feed */}
       <div className="p-6 space-y-4">
         {posts.length > 0 ? (
-          posts.map(post => (
-            <div key={post.id} className="glass p-5 rounded-3xl group transition-all hover:bg-white/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <div className="flex gap-4">
-                <Link to={`/profile/${post.userId}`} className="shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10">
-                    {post.photoURL ? (
-                      <img src={post.photoURL} alt={post.displayName} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-600 text-xs font-bold uppercase text-white/50">
-                        {post.displayName?.[0] || 'U'}
-                      </div>
-                    )}
-                  </div>
-                </Link>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
-                        <Link to={`/profile/${post.userId}`} className="font-bold text-white hover:underline">{post.displayName}</Link>
-                        <span className="text-xs opacity-50">· {post.createdAt ? (post.createdAt.toDate ? formatDistanceToNow(post.createdAt.toDate()) : 'just now') : 'just now'}</span>
-                      </div>
-                      {post.isRepost && (
-                        <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold">
-                          <Repeat size={10} />
-                          <span>Reposted from {post.originalPostAuthor}</span>
+          posts.map(post => {
+            if (activeTab !== 'replies') {
+              return <PostItem key={post.id} post={post as any} />;
+            }
+            return (
+              <div key={post.id} className="glass p-5 rounded-3xl group transition-all hover:bg-white/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="flex gap-4">
+                  <Link to={`/profile/${post.userId}`} className="shrink-0">
+                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10">
+                      {post.photoURL ? (
+                        <img src={post.photoURL} alt={post.displayName} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-slate-600 text-xs font-bold uppercase text-white/50">
+                          {post.displayName?.[0] || 'U'}
                         </div>
                       )}
-                      {activeTab === 'replies' && post.postId && parentPosts[post.postId] && (
-                        <span className="text-xs text-white/40 font-medium mt-0.5">
-                          Replying to{' '}
-                          <Link to={`/profile/${parentPosts[post.postId].userId}`} className="text-indigo-400 hover:underline">
-                            @{parentPosts[post.postId].displayName || 'someone'}
-                          </Link>
-                        </span>
+                    </div>
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <Link to={`/profile/${post.userId}`} className="font-bold text-white hover:underline">{post.displayName}</Link>
+                          <span className="text-xs opacity-50">· {post.createdAt ? (post.createdAt.toDate ? formatDistanceToNow(post.createdAt.toDate()) : 'just now') : 'just now'}</span>
+                        </div>
+                        {post.isRepost && (
+                          <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold">
+                            <Repeat size={10} />
+                            <span>Reposted from {post.originalPostAuthor}</span>
+                          </div>
+                        )}
+                        {activeTab === 'replies' && post.postId && parentPosts[post.postId] && (
+                          <span className="text-xs text-white/40 font-medium mt-0.5">
+                            Replying to{' '}
+                            <Link to={`/profile/${parentPosts[post.postId].userId}`} className="text-indigo-400 hover:underline">
+                              @{parentPosts[post.postId].displayName || 'someone'}
+                            </Link>
+                          </span>
+                        )}
+                      </div>
+                      {(post.userId === auth.currentUser?.uid || post.postOwnerId === auth.currentUser?.uid) && (
+                        <button 
+                          onClick={() => handleDelete(post)}
+                          className={`chip font-bold transition-all ${
+                            confirmDeleteId === (post._path || `posts/${post.id}`) 
+                              ? 'text-red-500 bg-red-500/20 px-3 py-1 rounded-full text-xs animate-pulse font-bold' 
+                              : 'text-red-500/60 hover:text-red-500'
+                          }`}
+                          title="Delete"
+                        >
+                          {confirmDeleteId === (post._path || `posts/${post.id}`) ? 'Confirm Delete?' : '🗑'}
+                        </button>
                       )}
                     </div>
-                    {(post.userId === auth.currentUser?.uid || post.postOwnerId === auth.currentUser?.uid) && (
-                      <button 
-                        onClick={() => handleDelete(post)}
-                        className={`chip font-bold transition-all ${
-                          confirmDeleteId === (post._path || `posts/${post.id}`) 
-                            ? 'text-red-500 bg-red-500/20 px-3 py-1 rounded-full text-xs animate-pulse font-bold' 
-                            : 'text-red-500/60 hover:text-red-500'
-                        }`}
-                        title="Delete"
-                      >
-                        {confirmDeleteId === (post._path || `posts/${post.id}`) ? 'Confirm Delete?' : '🗑'}
-                      </button>
-                    )}
-                  </div>
 
-                  {/* Quoted parent post if this is a reply */}
-                  {activeTab === 'replies' && post.postId && parentPosts[post.postId] && (
-                    <div 
-                      onClick={() => navigate('/')} 
-                      className="mt-3 mb-2 bg-white/5 border border-white/10 rounded-2xl p-3 text-xs relative overflow-hidden hover:bg-white/10 transition-all cursor-pointer"
-                    >
-                      <div className="absolute top-0 bottom-0 left-0 w-1 bg-indigo-500/50"></div>
-                      <div className="pl-2 space-y-1">
-                        <div className="flex items-center gap-1.5 opacity-60 font-semibold text-white/90">
-                          <div className="w-4 h-4 rounded-full bg-slate-700 overflow-hidden">
-                            {parentPosts[post.postId].photoURL ? (
-                              <img src={parentPosts[post.postId].photoURL} alt="" className="w-full h-full object-cover" />
+                    {/* Quoted parent post if this is a reply */}
+                    {activeTab === 'replies' && post.postId && parentPosts[post.postId] && (
+                      <div 
+                        onClick={() => navigate('/')} 
+                        className="mt-3 mb-2 bg-white/5 border border-white/10 rounded-2xl p-3 text-xs relative overflow-hidden hover:bg-white/10 transition-all cursor-pointer"
+                      >
+                        <div className="absolute top-0 bottom-0 left-0 w-1 bg-indigo-500/50"></div>
+                        <div className="pl-2 space-y-1">
+                          <div className="flex items-center gap-1.5 opacity-60 font-semibold text-white/90">
+                            <div className="w-4 h-4 rounded-full bg-slate-700 overflow-hidden">
+                              {parentPosts[post.postId].photoURL ? (
+                                <img src={parentPosts[post.postId].photoURL} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-slate-600 text-[6px] font-bold uppercase text-white/50">
+                                  {parentPosts[post.postId].displayName?.[0] || 'U'}
+                                </div>
+                              )}
+                            </div>
+                            <span>{parentPosts[post.postId].displayName}</span>
+                          </div>
+                          <p className="opacity-70 line-clamp-2 leading-relaxed text-slate-300">
+                            {parentPosts[post.postId].text}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    <p className="mt-2 text-[15px] opacity-90 leading-relaxed whitespace-pre-wrap text-white">
+                      <MentionText text={post.text || post.comment || ''} />
+                    </p>
+                    {post.mediaItems && post.mediaItems.length > 0 ? (
+                      <div className={`mt-3 grid gap-2 ${post.mediaItems.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                        {post.mediaItems.map((item: any, idx: number) => (
+                          <div key={idx} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+                            {item.type === 'video' ? (
+                              <video src={item.url} controls className="w-full h-auto max-h-[300px] object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center bg-slate-600 text-[6px] font-bold uppercase text-white/50">
-                                {parentPosts[post.postId].displayName?.[0] || 'U'}
-                              </div>
+                              <img src={item.url} alt="content" className="w-full h-auto max-h-[300px] object-cover hover:scale-105 transition-transform duration-500" />
                             )}
                           </div>
-                          <span>{parentPosts[post.postId].displayName}</span>
-                        </div>
-                        <p className="opacity-70 line-clamp-2 leading-relaxed text-slate-300">
-                          {parentPosts[post.postId].text}
-                        </p>
+                        ))}
                       </div>
-                    </div>
-                  )}
-
-                  <p className="mt-2 text-[15px] opacity-90 leading-relaxed whitespace-pre-wrap text-white">
-                    <MentionText text={post.text || post.comment || ''} />
-                  </p>
-                  {post.mediaItems && post.mediaItems.length > 0 ? (
-                    <div className={`mt-3 grid gap-2 ${post.mediaItems.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                      {post.mediaItems.map((item: any, idx: number) => (
-                        <div key={idx} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-                          {item.type === 'video' ? (
-                            <video src={item.url} controls className="w-full h-auto max-h-[300px] object-cover" />
-                          ) : (
-                            <img src={item.url} alt="content" className="w-full h-auto max-h-[300px] object-cover hover:scale-105 transition-transform duration-500" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  ) : post.media && (
-                    <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
-                      <img src={post.media} alt="content" className="w-full h-auto max-h-[450px] object-cover hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  )}
-                  {activeTab !== 'replies' && (
-                    <div className="flex justify-between items-center mt-4 text-white/40">
-                      <button className="hover:text-indigo-400 group/icon flex items-center gap-2 transition-colors">
-                        <MessageCircle size={18} />
-                        <span className="text-xs">{post.commentsCount || 0}</span>
-                      </button>
-                      <button className={`flex items-center gap-2 transition-colors ${post.reposts?.includes(auth.currentUser?.uid || '') ? 'text-green-400 font-bold' : 'hover:text-green-400'}`}>
-                        <Repeat size={18} />
-                        <span className="text-xs">{post.reposts?.length || 0}</span>
-                      </button>
-                      <button className={`flex items-center gap-2 transition-colors ${post.likes?.includes(auth.currentUser?.uid || '') ? 'text-pink-500 font-bold' : 'hover:text-pink-500'}`}>
-                        <Heart size={18} fill={post.likes?.includes(auth.currentUser?.uid || '') ? 'currentColor' : 'none'} />
-                        <span className="text-xs">{post.likes?.length || 0}</span>
-                      </button>
-                      <ShareButton 
-                        postId={post.id} 
-                        postText={post.text || ''} 
-                        userId={post.userId} 
-                        displayName={post.displayName} 
-                      />
-                    </div>
-                  )}
+                    ) : post.media && (
+                      <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
+                        <img src={post.media} alt="content" className="w-full h-auto max-h-[450px] object-cover hover:scale-105 transition-transform duration-500" />
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <div className="py-20 text-center opacity-40 italic flex flex-col items-center gap-3">
             <span className="text-4xl text-white/10 font-black uppercase tracking-tighter">Empty Space</span>

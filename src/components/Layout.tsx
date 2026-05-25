@@ -25,6 +25,7 @@ interface LayoutProps {
 export default function Layout({ user: authUser }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
+  const isChatLikePage = location.pathname === '/messages' || location.pathname === '/orion';
   const [unreadCount, setUnreadCount] = useState(0);
   const [trending, setTrending] = useState<PostType[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -152,7 +153,7 @@ export default function Layout({ user: authUser }: LayoutProps) {
   ];
 
   return (
-    <div className="flex flex-col md:flex-row min-h-screen md:h-screen w-full mx-auto overflow-hidden relative bg-[#0f172a]">
+    <div className="flex flex-col md:flex-row h-screen w-full mx-auto overflow-hidden relative bg-[#0f172a]">
       {/* Mobile Top Header */}
       <header className="md:hidden flex items-center justify-between p-4 border-b border-white/10 bg-[#0f172a]/95 backdrop-blur-md z-40 sticky top-0 shrink-0">
         <div className="flex items-center gap-3">
@@ -528,9 +529,9 @@ export default function Layout({ user: authUser }: LayoutProps) {
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto min-h-full pb-6 md:pb-20 pt-2 md:pt-0 scrollbar-hide flex justify-center">
-            <div className="max-w-[1440px] mx-auto flex w-full h-full justify-center lg:justify-start">
-              <div className="flex-1 max-w-4xl w-full">
+          <div className={`flex-1 ${isChatLikePage ? 'overflow-hidden h-full' : 'overflow-y-auto h-full pb-6 md:pb-20 pt-2 md:pt-0 scrollbar-hide'} flex justify-center min-h-0`}>
+            <div className={`max-w-[1440px] mx-auto flex w-full h-full justify-center lg:justify-start ${isChatLikePage ? 'overflow-hidden' : ''}`}>
+              <div className={`flex-1 max-w-4xl w-full ${isChatLikePage ? 'h-full flex flex-col overflow-hidden min-h-0' : ''}`}>
                 <Outlet />
               </div>
               
