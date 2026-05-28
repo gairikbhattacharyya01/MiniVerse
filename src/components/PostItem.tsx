@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   collection, 
   onSnapshot, 
@@ -26,7 +28,11 @@ import {
   X,
   Check,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ChevronLeft,
+  ChevronRight,
+  ExternalLink,
+  Maximize2
 } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
@@ -46,6 +52,37 @@ export default function PostItem({ post }: PostItemProps) {
   const [newComment, setNewComment] = useState('');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const navigate = useNavigate();
+
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [activeMediaIndex, setActiveMediaIndex] = useState(0);
+
+  const allMedia = post.mediaItems && post.mediaItems.length > 0
+    ? post.mediaItems
+    : post.media
+      ? [{ url: post.media, type: 'image' as const }]
+      : [];
+
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setLightboxOpen(false);
+      } else if (e.key === 'ArrowLeft' && allMedia.length > 1) {
+        setActiveMediaIndex(prev => (prev - 1 + allMedia.length) % allMedia.length);
+      } else if (e.key === 'ArrowRight' && allMedia.length > 1) {
+        setActiveMediaIndex(prev => (prev + 1) % allMedia.length);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [lightboxOpen, allMedia.length]);
 
   useEffect(() => {
     setLiked(post.likes?.includes(auth.currentUser?.uid || ''));
@@ -306,18 +343,45 @@ export default function PostItem({ post }: PostItemProps) {
           {post.mediaItems && post.mediaItems.length > 0 ? (
             <div className={`mt-3 grid gap-2 ${post.mediaItems.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
               {post.mediaItems.map((item, idx) => (
-                <div key={idx} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
+                <div 
+                  key={idx} 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveMediaIndex(idx);
+                    setLightboxOpen(true);
+                  }}
+                  className="relative group/media overflow-hidden rounded-2xl border border-white/10 bg-slate-900 cursor-zoom-in min-h-[150px] flex items-center justify-center"
+                >
                   {item.type === 'video' ? (
-                    <video src={item.url} controls className="w-full h-auto max-h-[300px] object-cover" />
+                    <video src={item.url} className="w-full h-auto max-h-[300px] object-cover pointer-events-none" />
                   ) : (
-                    <img src={item.url} alt={`Post media ${idx}`} className="w-full h-auto max-h-[300px] object-cover hover:scale-105 transition-transform duration-500" />
+                    <img src={item.url} alt={`Post media ${idx}`} className="w-full h-auto max-h-[300px] object-cover group-hover/media:scale-105 transition-transform duration-500" />
                   )}
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center z-10">
+                    <div className="p-2.5 bg-black/60 rounded-full text-white backdrop-blur-sm border border-white/10 scale-90 group-hover/media:scale-100 transition-transform">
+                      <Maximize2 size={18} />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           ) : post.media && (
-            <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
-              <img src={post.media} alt="Post media" className="w-full h-auto max-h-[450px] object-cover hover:scale-105 transition-transform duration-500" />
+            <div 
+              onClick={(e) => {
+                e.stopPropagation();
+                setActiveMediaIndex(0);
+                setLightboxOpen(true);
+              }}
+              className="relative group/media mt-3 overflow-hidden rounded-2xl border border-white/10 cursor-zoom-in"
+            >
+              <img src={post.media} alt="Post media" className="w-full h-auto max-h-[450px] object-cover group-hover/media:scale-105 transition-transform duration-500" />
+              {/* Hover Overlay */}
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/media:opacity-100 transition-opacity flex items-center justify-center z-10">
+                <div className="p-2.5 bg-black/60 rounded-full text-white backdrop-blur-sm border border-white/10 scale-90 group-hover/media:scale-100 transition-transform">
+                  <Maximize2 size={18} />
+                </div>
+              </div>
             </div>
           )}
 
@@ -379,6 +443,159 @@ export default function PostItem({ post }: PostItemProps) {
           )}
         </div>
       </div>
+
+      {createPortal(
+        <AnimatePresence>
+          {lightboxOpen && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-[9999] flex flex-col justify-between bg-slate-950/98 backdrop-blur-lg select-none text-white overflow-hidden"
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxOpen(false);
+              }}
+            >
+              {/* Header */}
+              <header className="w-full bg-gradient-to-b from-slate-950/80 to-transparent p-6 flex items-center justify-between z-10 shrink-0" onClick={(e) => e.stopPropagation()}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden shrink-0">
+                    {post.photoURL ? (
+                      <img src={post.photoURL} alt={post.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-slate-700 text-xs font-bold uppercase text-white/50">
+                        {post.displayName?.[0] || 'U'}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col text-left">
+                    <span className="text-sm font-bold tracking-tight text-white">{post.displayName}</span>
+                    {allMedia.length > 1 && (
+                      <span className="text-[10px] text-slate-400 mt-0.5 font-medium">
+                        Item {activeMediaIndex + 1} of {allMedia.length}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <a 
+                    href={allMedia[activeMediaIndex]?.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    onClick={(e) => e.stopPropagation()} 
+                    className="p-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-slate-300 hover:text-white rounded-full transition-all duration-200"
+                    title="Open original in new tab"
+                  >
+                    <ExternalLink size={18} />
+                  </a>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setLightboxOpen(false);
+                    }}
+                    className="p-2.5 bg-indigo-500 hover:bg-indigo-600 hover:scale-105 active:scale-95 text-white rounded-full transition-all duration-200 shadow-lg shadow-indigo-500/20"
+                    title="Close"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+              </header>
+
+              {/* Main Viewport */}
+              <div className="flex-1 flex items-center justify-center p-4 min-h-0 relative">
+                {allMedia.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMediaIndex(prev => (prev - 1 + allMedia.length) % allMedia.length);
+                    }}
+                    className="absolute left-4 md:left-8 z-10 p-3.5 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 rounded-full text-white cursor-pointer transition-all duration-200 backdrop-blur-sm shadow-2xl hover:border-white/20"
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                )}
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeMediaIndex}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    className="max-w-full max-h-[70vh] md:max-h-[78vh] flex items-center justify-center p-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {allMedia[activeMediaIndex]?.type === 'video' ? (
+                      <video 
+                        src={allMedia[activeMediaIndex]?.url} 
+                        controls 
+                        autoPlay 
+                        className="max-w-full max-h-[70vh] md:max-h-[78vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+                      />
+                    ) : (
+                      <img 
+                        src={allMedia[activeMediaIndex]?.url} 
+                        alt="Fullscreen media" 
+                        className="max-w-full max-h-[70vh] md:max-h-[78vh] object-contain rounded-2xl shadow-2xl border border-white/10 select-text"
+                        referrerPolicy="no-referrer"
+                      />
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {allMedia.length > 1 && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setActiveMediaIndex(prev => (prev + 1) % allMedia.length);
+                    }}
+                    className="absolute right-4 md:right-8 z-10 p-3.5 bg-white/5 hover:bg-white/10 active:scale-95 border border-white/10 rounded-full text-white cursor-pointer transition-all duration-200 backdrop-blur-sm shadow-2xl hover:border-white/20"
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+                )}
+              </div>
+
+              {/* Bottom Caption & Thumbnail Reels */}
+              <div className="w-full bg-gradient-to-t from-slate-950/95 via-slate-950/80 to-transparent p-6 mt-auto flex flex-col items-center gap-4 text-center select-text shrink-0" onClick={(e) => e.stopPropagation()}>
+                {post.text && (
+                  <div className="max-w-xl text-center">
+                    <p className="text-sm md:text-base text-slate-200 line-clamp-3 leading-relaxed drop-shadow-md">
+                      {post.text}
+                    </p>
+                  </div>
+                )}
+                {allMedia.length > 1 && (
+                  <div className="flex gap-2.5 min-h-[50px] items-center justify-center max-w-full overflow-x-auto py-2 px-4 scrollbar-hide">
+                    {allMedia.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveMediaIndex(idx)}
+                        className={`relative h-11 w-11 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${
+                          idx === activeMediaIndex 
+                            ? 'border-indigo-500 scale-110 shadow-lg shadow-indigo-500/30' 
+                            : 'border-white/10 hover:border-white/30 scale-100 opacity-50 hover:opacity-100'
+                        }`}
+                      >
+                        {item.type === 'video' ? (
+                          <div className="w-full h-full bg-slate-900 flex items-center justify-center text-[8px] font-bold text-slate-400">
+                            VIDEO
+                          </div>
+                        ) : (
+                          <img src={item.url} alt="thumbnail" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 }
