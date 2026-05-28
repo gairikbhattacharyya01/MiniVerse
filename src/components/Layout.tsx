@@ -28,7 +28,31 @@ export default function Layout({ user: authUser }: LayoutProps) {
   const isChatLikePage = location.pathname === '/messages' || location.pathname === '/orion';
   const [unreadCount, setUnreadCount] = useState(0);
   const [trending, setTrending] = useState<PostType[]>([]);
+  const [trendingHashtags, setTrendingHashtags] = useState<{tag: string, count: number}[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+
+  const renderTrendingText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\#[a-zA-Z0-9_]+)/g);
+    return parts.map((part, index) => {
+      if (part.startsWith('#') && part.length > 1) {
+        return (
+          <span
+            key={index}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              navigate(`/explore?q=${encodeURIComponent(part)}`);
+            }}
+            className="text-indigo-400 hover:text-[#00ffd5] hover:underline cursor-pointer inline-block font-bold transition-all duration-200"
+          >
+            {part}
+          </span>
+        );
+      }
+      return <span key={index}>{part}</span>;
+    });
+  };
   const [searchResults, setSearchResults] = useState<UserProfile[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [currentUserProfile, setCurrentUserProfile] = useState<UserProfile | null>(null);
@@ -105,6 +129,24 @@ export default function Layout({ user: authUser }: LayoutProps) {
       const posts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as PostType[];
       const sorted = posts.sort((a, b) => (b.likes?.length || 0) - (a.likes?.length || 0));
       setTrending(sorted.slice(0, 5));
+
+      // Extract and count hashtags
+      const hashtagCounts: { [key: string]: number } = {};
+      posts.forEach(post => {
+        if (!post.text) return;
+        const tags = post.text.match(/\#[a-zA-Z0-9_]+/g);
+        if (tags) {
+          const uniqueTags = Array.from(new Set(tags.map(t => t.toLowerCase())));
+          uniqueTags.forEach(tag => {
+            hashtagCounts[tag] = (hashtagCounts[tag] || 0) + 1;
+          });
+        }
+      });
+      const sortedTags = Object.entries(hashtagCounts)
+        .map(([tag, count]) => ({ tag, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+      setTrendingHashtags(sortedTags);
     });
     return unsubscribe;
   }, []);
@@ -541,15 +583,54 @@ export default function Layout({ user: authUser }: LayoutProps) {
                   <div className="glass p-5 rounded-3xl">
                     <h3 className="text-lg font-bold mb-4">Trending Now</h3>
                     <div className="flex flex-col gap-4">
-                      {trending.length > 0 ? trending.map(post => (
-                        <div key={post.id} className="cursor-pointer group" onClick={() => navigate('/explore')}>
-                          <div className="text-[11px] opacity-50">Trending · Popular</div>
-                          <div className="font-bold group-hover:text-indigo-400 transition-colors line-clamp-1">{post.text}</div>
-                          <div className="text-[11px] opacity-50">{post.likes?.length || 0} likes</div>
+                      
+                      {/* Trending Hashtags Section */}
+                      {trendingHashtags.length > 0 && (
+                        <div className="mb-4 pb-4 border-b border-white/5">
+                          <h4 className="text-xs font-bold text-slate-400 mb-3 tracking-wide uppercase">Popular Tags</h4>
+                          <div className="flex flex-col gap-3">
+                            {trendingHashtags.map(({ tag, count }) => (
+                              <div 
+                                key={tag} 
+                                className="flex items-center justify-between cursor-pointer group"
+                                onClick={() => navigate(`/explore?q=${encodeURIComponent(tag)}`)}
+                              >
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-indigo-400 group-hover:text-[#00ffd5] group-hover:underline transition-colors">
+                                    {tag}
+                                  </span>
+                                  <span className="text-[10px] opacity-50 mt-0.5">
+                                    {count} {count === 1 ? 'post' : 'posts'}
+                                  </span>
+                                </div>
+                                <span className="text-[9px] bg-indigo-500/15 text-indigo-300 font-semibold px-2 py-0.5 rounded-full group-hover:bg-indigo-500/30 transition-all">
+                                  Trending
+                                </span>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      )) : (
-                        <div className="text-xs opacity-50 italic">Exploring for trends...</div>
                       )}
+
+                      <div>
+                        {trendingHashtags.length > 0 && (
+                          <h4 className="text-xs font-bold text-slate-400 mb-3 tracking-wide uppercase">Trending Posts</h4>
+                        )}
+                        <div className="flex flex-col gap-4">
+                          {trending.length > 0 ? trending.map(post => (
+                            <div key={post.id} className="cursor-pointer group hover:bg-white/5 p-2 -mx-2 rounded-xl transition-all" onClick={() => navigate(`/profile/${post.userId}`)}>
+                              <div className="text-[10px] opacity-50 mb-0.5">Trending · Popular</div>
+                              <div className="font-semibold group-hover:text-indigo-200 text-white transition-colors line-clamp-2 text-xs leading-relaxed">
+                                {renderTrendingText(post.text)}
+                              </div>
+                              <div className="text-[10px] text-indigo-300/70 mt-1">{post.likes?.length || 0} likes</div>
+                            </div>
+                          )) : (
+                            <div className="text-xs opacity-50 italic">Exploring for trends...</div>
+                          )}
+                        </div>
+                      </div>
+
                     </div>
                   </div>
                 </aside>

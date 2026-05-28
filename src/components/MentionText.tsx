@@ -13,8 +13,8 @@ export default function MentionText({ text }: MentionTextProps) {
 
   if (!text) return null;
 
-  // Split by @username tokens while keeping the tokens in the array
-  const parts = text.split(/(@[a-zA-Z0-9_.-]+)/g);
+  // Split by @username tokens and #hashtags while keeping them in the array
+  const parts = text.split(/(@[a-zA-Z0-9_.-]+|\#[a-zA-Z0-9_]+)/g);
 
   const handleMentionClick = async (e: React.MouseEvent, maybeMention: string) => {
     e.preventDefault();
@@ -61,6 +61,7 @@ export default function MentionText({ text }: MentionTextProps) {
   return (
     <span className="whitespace-pre-wrap break-words">
       {parts.map((part, index) => {
+        if (!part) return null;
         if (part.startsWith('@') && part.length > 1) {
           const isCurrentlyResolving = resolving === part;
           return (
@@ -73,6 +74,23 @@ export default function MentionText({ text }: MentionTextProps) {
               }`}
               style={{ background: 'none', border: 'none', padding: 0 }}
               title={`View ${part}'s profile`}
+            >
+              {part}
+            </button>
+          );
+        }
+        if (part.startsWith('#') && part.length > 1) {
+          return (
+            <button
+              key={index}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                navigate(`/explore?q=${encodeURIComponent(part)}`);
+              }}
+              className="inline-block font-bold text-indigo-400 hover:text-[#00ffd5] hover:underline transition-all duration-200 cursor-pointer text-left focus:outline-none align-baseline"
+              style={{ background: 'none', border: 'none', padding: 0 }}
+              title={`Search for tag ${part}`}
             >
               {part}
             </button>
