@@ -143,7 +143,7 @@ export default function Orion() {
   // Client visual indicators
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [isSpeakingId, setIsSpeakingId] = useState<string | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Sync to local systems
   useEffect(() => {
