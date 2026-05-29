@@ -445,7 +445,7 @@ export default function ShareButton({
 
     // Content Text
     const contentX = cardX + 54;
-    const maxContentWidth = cardWidth - 290; // Reduced to fit QR code elegantly to its right!
+    const maxContentWidth = cardWidth - 340; // Reduced to fit larger QR code elegantly to its right!
 
     // Word Wrap Implementation finding lines first for dynamic sizing & alignment
     const getWrappedLines = (c: CanvasRenderingContext2D, txt: string, maxWidth: number) => {
@@ -506,9 +506,9 @@ export default function ShareButton({
       ctx.fillText(lines[i], contentX + 24, contentY + (i * lineHeight));
     }
 
-    // QR Code Drawing (Embedded within the card itself!)
-    const qrWidth = 110;
-    const qrHeight = 110;
+    // QR Code Drawing (Embedded within the card itself!) - Upgraded and enlarged!
+    const qrWidth = 150;
+    const qrHeight = 150;
     const qrX = cardX + cardWidth - 54 - qrWidth; // Align with the right margin of the card
     const qrY = cardY + 54; // Align with the avatar height on the right side
 
@@ -522,7 +522,7 @@ export default function ShareButton({
     const px = qrX - panelPadding;
     const py = qrY - panelPadding;
     const pw = qrWidth + (panelPadding * 2);
-    const ph = qrHeight + (panelPadding * 2) + 26; // extra space for the scan text label
+    const ph = qrHeight + (panelPadding * 2) + 36; // larger extra space for scan & view subtexts
     const pr = 16; // radius
 
     ctx.beginPath();
@@ -606,7 +606,11 @@ export default function ShareButton({
     ctx.fillStyle = selectedGrad.colors[1] || selectedGrad.colors[0];
     ctx.font = '900 10px monospace';
     // Align horizontally with the center of QR
-    ctx.fillText('SCAN SIGNAL', qrX + (qrWidth / 2), qrY + qrHeight + 10);
+    ctx.fillText('SCAN PROFILE SIGNAL', qrX + (qrWidth / 2), qrY + qrHeight + 8);
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.font = 'bold 8px monospace';
+    ctx.fillText('VIEW ON MINIVERSE', qrX + (qrWidth / 2), qrY + qrHeight + 20);
 
     // Bottom Watermark branding
     const footerY = cardY + cardHeight - 48;
@@ -791,24 +795,24 @@ export default function ShareButton({
                         </div>
                       </div>
  
-                      {/* Matching QR Code alignment inside Mockup */}
-                      <div className="flex flex-col items-center gap-0.5 bg-[#070e1b] rounded-lg p-1 border shrink-0 scale-90 sm:scale-100 origin-top-right relative shadow-lg transition-colors duration-500" style={{ borderColor: `${currGrad.colors[1] || currGrad.colors[0]}33` }}>
+                      {/* Matching QR Code alignment inside Mockup - Enlarged for beautiful high fidelity */}
+                      <div className="flex flex-col items-center gap-1 bg-[#070e1b] rounded-lg p-1.5 border shrink-0 scale-95 sm:scale-100 origin-top-right relative shadow-lg transition-colors duration-500" style={{ borderColor: `${currGrad.colors[1] || currGrad.colors[0]}33` }}>
                         {/* Aperture corner marks */}
                         <div className="absolute top-0 left-0 w-1 h-1 border-t border-l transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
                         <div className="absolute top-0 right-0 w-1 h-1 border-t border-r transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
                         <div className="absolute bottom-0 left-0 w-1 h-1 border-b border-l transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
                         <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
 
-                        <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded overflow-hidden">
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded overflow-hidden">
                           <img 
-                            src={`https://api.qrserver.com/v1/create-qr-code/?size=60x60&color=255-255-255&bgcolor=7-14-27&data=${encodeURIComponent(postUrl)}`} 
+                            src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=255-255-255&bgcolor=7-14-27&data=${encodeURIComponent(postUrl)}`} 
                             alt="Live Post QR Code" 
                             className="w-full h-full opacity-90 block" 
                           />
                           {/* Pulsing scanning line over QR preview */}
                           <div className="absolute top-0 left-0 right-0 h-0.5 shadow-lg animate-[bounce_2s_infinite] transition-colors duration-500" style={{ backgroundColor: currGrad.colors[1] || currGrad.colors[0], boxShadow: `0 2px 8px ${currGrad.colors[1] || currGrad.colors[0]}` }} />
                         </div>
-                        <span className="text-[4px] font-black tracking-widest leading-none mt-0.5 transition-colors duration-500" style={{ color: currGrad.colors[1] || currGrad.colors[0] }}>SCAN SIGNAL</span>
+                        <span className="text-[4.5px] font-black tracking-widest leading-none mt-0.5 transition-colors duration-500" style={{ color: currGrad.colors[1] || currGrad.colors[0] }}>SCAN PROFILE</span>
                       </div>
                     </div>
 
@@ -852,6 +856,17 @@ export default function ShareButton({
                           )}
                         </button>
                       ))}
+                    </div>
+                  </div>
+
+                  {/* HIGH VISIBILITY INTEGRATION: MiniVerse Portal Scanning Explanation */}
+                  <div className="mt-4 p-3.5 bg-indigo-950/20 border border-indigo-500/20 rounded-xl flex items-start gap-2.5">
+                    <QrCode size={18} className="text-[#00ffd5] shrink-0 mt-0.5 animate-pulse" />
+                    <div className="min-w-0">
+                      <h4 className="text-[10px] font-black uppercase text-[#00ffd5] tracking-widest leading-none mb-1">Interactive Portal Target</h4>
+                      <p className="text-[11px] text-slate-300 leading-relaxed font-medium">
+                        Anyone scanning the enlarged QR code on your card is automatically directed to your customized **MiniVerse Profile** page!
+                      </p>
                     </div>
                   </div>
                 </div>
