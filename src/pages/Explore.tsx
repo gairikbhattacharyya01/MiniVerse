@@ -68,8 +68,8 @@ The treaty marks a major diplomatic triumph, settling months-long disputes regar
   },
   {
     id: 'n3',
-    category: 'National • Transit System',
-    region: 'national',
+    category: 'International • Transit System',
+    region: 'international',
     title: 'Federal Council Approves Phase-4 Gravity Tube Transport Network Expansion',
     time: '2 hours ago',
     views: '145K',
@@ -98,8 +98,8 @@ While several industrial conglomerates expressed reservations regarding short-te
   },
   {
     id: 'n5',
-    category: 'National • Economy',
-    region: 'national',
+    category: 'International • Economy',
+    region: 'international',
     title: 'Treasury Secures Base Rate Freeze Following Automation Sector Surplus',
     time: '5 hours ago',
     views: '98K',
@@ -128,8 +128,8 @@ The newly formed alliance establishes fixed transport quotas across major planet
   },
   {
     id: 'n7',
-    category: 'National • Science Policy',
-    region: 'national',
+    category: 'International • Science Policy',
+    region: 'international',
     title: 'Federal Labs Standardize Bio-Synthetic Gene Sequencing Safeguards',
     time: '7 hours ago',
     views: '84K',
@@ -427,22 +427,41 @@ export default function Explore() {
   });
 
   // Region and Refresh filters
-  const [selectedRegion, setSelectedRegion] = useState<'all' | 'indian' | 'international' | 'national'>('all');
+  const [selectedRegion, setSelectedRegion] = useState<'all' | 'indian' | 'international'>('all');
   const [refreshing, setRefreshing] = useState(false);
+  const [isFetchingLive, setIsFetchingLive] = useState(false);
 
-  const handleManualRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => {
-      setShuffledNews(randomizeMetadata('news', shuffle(NEWS_ARTICLES_POOL)));
-      setShuffledSports(randomizeMetadata('sports', shuffle(SPORTS_UPDATES_POOL)));
-      setShuffledEntertainment(randomizeMetadata('entertainment', shuffle(ENTERTAINMENT_ARTICLES_POOL)));
-      
-      const freshNews = randomizeMetadata('news', shuffle(NEWS_ARTICLES_POOL));
-      if (freshNews.length > 0) {
-        setSpotlightArticle(freshNews[0] || null);
+  const fetchLiveNews = async (forceRefresh = false) => {
+    setIsFetchingLive(true);
+    try {
+      const response = await fetch(`/api/explore/news${forceRefresh ? '?refresh=true' : ''}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch: ${response.statusText}`);
       }
-      setRefreshing(false);
-    }, 500);
+      const data = await response.json();
+      if (data && data.news && data.sports && data.entertainment) {
+        setShuffledNews(data.news);
+        setShuffledSports(data.sports);
+        setShuffledEntertainment(data.entertainment);
+        if (data.news.length > 0) {
+          setSpotlightArticle(data.news[0]);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not fetch live grounded news from Gemini API, falling back to static pool:', err);
+    } finally {
+      setIsFetchingLive(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveNews(false);
+  }, []);
+
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    await fetchLiveNews(true);
+    setRefreshing(false);
   };
 
   // Custom suggestion close state
@@ -709,16 +728,12 @@ export default function Explore() {
           {!filterQuery && ['news', 'sports', 'entertainment'].includes(activeTab) && (
             <div className="flex items-center justify-between pt-1 pb-1 gap-2 border-t border-white/5 select-none animate-in fade-in slide-in-from-top-1 duration-200">
               <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide py-1">
-                {(['all', 'indian', 'international', 'national'] as const).map((region) => {
+                {(['all', 'indian', 'international'] as const).map((region) => {
                   const label = {
                     all: { news: 'All News', sports: 'All Sports', entertainment: 'All Feeds' }[activeTab as 'news' | 'sports' | 'entertainment'],
                     indian: '🇮🇳 India',
-                    international: '🌐 Internat\'l',
-                    national: '🇺🇸 National'
+                    international: '🌐 International'
                   }[region];
-                  
-                  // Limit options for sports and entertainment if they don't use 'national' region key
-                  if (activeTab !== 'news' && region === 'national') return null;
 
                   const active = selectedRegion === region;
                   return (
@@ -742,11 +757,11 @@ export default function Explore() {
               <button
                 type="button"
                 onClick={handleManualRefresh}
-                disabled={refreshing}
+                disabled={refreshing || isFetchingLive}
                 className="p-2 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/10 rounded-full text-slate-300 hover:text-white transition-all cursor-pointer shrink-0 disabled:opacity-40 flex items-center justify-center hover:scale-105 active:scale-95"
                 title="Refresh Updates"
               >
-                <RefreshCw size={11} className={refreshing ? 'animate-spin text-[#00ffd5]' : ''} />
+                <RefreshCw size={11} className={refreshing || isFetchingLive ? 'animate-spin text-[#00ffd5]' : ''} />
               </button>
             </div>
           )}

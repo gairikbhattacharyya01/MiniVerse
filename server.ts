@@ -1,7 +1,7 @@
 import express from 'express';
 import path from 'path';
 import { createServer as createViteServer } from 'vite';
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, Type } from '@google/genai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -30,12 +30,110 @@ function getGeminiClient(): GoogleGenAI {
   return aiClient;
 }
 
+// Caching layer for dynamically generated news
+let cachedNews: any = null;
+let lastCacheTime = 0;
+const CACHE_TTL = 15 * 60 * 1000; // Cache for 15 minutes to avoid hitting rate limits
+
 async function startServer() {
   const app = express();
   const PORT = 3000;
 
   // Middleware for body parsing
   app.use(express.json());
+
+  // Explore page News Aggregator Endpoint using Gemini Search Grounding
+  app.get('/api/explore/news', async (req, res) => {
+    try {
+      const forceRefresh = req.query.refresh === 'true';
+      const currentTime = Date.now();
+
+      if (cachedNews && (currentTime - lastCacheTime < CACHE_TTL) && !forceRefresh) {
+        res.json(cachedNews);
+        return;
+      }
+
+      // Check if GEMINI_API_KEY is available
+      if (!process.env.GEMINI_API_KEY) {
+        res.status(503).json({ error: 'GEMINI_API_KEY is not configured on server.' });
+        return;
+      }
+
+      const client = getGeminiClient();
+
+      const articleSchema = {
+        type: Type.OBJECT,
+        properties: {
+          id: { type: Type.STRING, description: "Unique string ID, e.g., 'n_dyn_1', 's_dyn_1', etc." },
+          category: { type: Type.STRING, description: "Display category name, e.g. 'Spaceflight • Live', 'Cricket • IPL', 'Bollywood • Launch'" },
+          region: { type: Type.STRING, description: "Must be exactly 'indian' or 'international' depending on context." },
+          title: { type: Type.STRING, description: "Stunning, high-quality news headline." },
+          time: { type: Type.STRING, description: "Relative time from now, e.g., '14 mins ago', '2 hours ago', '1 day ago'." },
+          views: { type: Type.STRING, description: "View count string, e.g., '152K', '89K'." },
+          author: { type: Type.STRING, description: "Writer name, e.g. 'Jane Watson, Senior Tech Correspondent'." },
+          readTime: { type: Type.STRING, description: "Average read time, e.g., '3 min read', '5 min read'." },
+          image: { type: Type.STRING, description: "Specific realistic topic-themed Unsplash image URL (e.g. containing keywords for spaceships, technology, cricket stadium, city lights, cinema, etc.)" },
+          excerpt: { type: Type.STRING, description: "One-sentence overview of the article." },
+          body: { type: Type.STRING, description: "A detailed 2-3 paragraph breakdown of the article. Must look realistic and contain real quotes or rich descriptions." }
+        },
+        required: ["id", "category", "region", "title", "time", "views", "author", "readTime", "image", "excerpt", "body"]
+      };
+
+      const responseSchema = {
+        type: Type.OBJECT,
+        properties: {
+          news: {
+            type: Type.ARRAY,
+            description: "At least 5 high-quality main news articles. Cover both Indian and International news.",
+            items: articleSchema
+          },
+          sports: {
+            type: Type.ARRAY,
+            description: "At least 4 high-quality sports updates. Cover both Indian and International sports such as Cricket, Football, Tennis, Athletics.",
+            items: articleSchema
+          },
+          entertainment: {
+            type: Type.ARRAY,
+            description: "At least 4 high-quality entertainment stories. Cover both Indian cinema/music and global show-biz, pop culture, art.",
+            items: articleSchema
+          }
+        },
+        required: ["news", "sports", "entertainment"]
+      };
+
+      const prompt = `Generate an updated, realistic set of news, sports, and entertainment stories for May 2026. 
+Include actual real-world news events happening today in India and globally, including technology milestones, environmental pacts, sports tournaments, movies, and arts.
+Make sure there are some stories set in India (region: 'indian') and some set internationally (region: 'international').
+Provide rich, high-quality body descriptions for each. For the images, use real, elegant Unsplash queries or keywords in the URL that match the topics (e.g. space, science, technology, soccer, film, concert, india).`;
+
+      const response = await client.models.generateContent({
+        model: 'gemini-3.5-flash',
+        contents: prompt,
+        config: {
+          tools: [{ googleSearch: {} }],
+          responseMimeType: 'application/json',
+          responseSchema: responseSchema,
+          temperature: 0.82
+        }
+      });
+
+      const responseText = response.text || '';
+      if (!responseText) {
+        throw new Error('Gemini returned an empty response.');
+      }
+
+      const parsedNews = JSON.parse(responseText);
+      
+      // Update cache
+      cachedNews = parsedNews;
+      lastCacheTime = currentTime;
+
+      res.json(parsedNews);
+    } catch (err: any) {
+      console.error('Error in /api/explore/news:', err);
+      res.status(500).json({ error: err.message || 'Failed to aggregate updated news' });
+    }
+  });
 
   // Orion AI Chat Proxy Endpoint
   app.post('/api/orion', async (req, res) => {
