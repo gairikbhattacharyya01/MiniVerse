@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { auth, db } from '../lib/firebase';
 import { signOut, sendEmailVerification } from 'firebase/auth';
-import { collection, query, where, onSnapshot, orderBy, limit, getDocs, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, getDocs, doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { Post as PostType, UserProfile } from '../types';
 import Logo from './Logo';
 
@@ -108,6 +108,27 @@ export default function Layout({ user: authUser }: LayoutProps) {
       }
     });
     return unsubscribe;
+  }, [authUser]);
+
+  useEffect(() => {
+    if (!authUser) return;
+    
+    const updateActiveStatus = async () => {
+      try {
+        await updateDoc(doc(db, 'users', authUser.uid), {
+          lastActive: serverTimestamp()
+        });
+      } catch (err) {
+        console.error("Error updating active status:", err);
+      }
+    };
+
+    updateActiveStatus();
+    const interval = setInterval(updateActiveStatus, 30000);
+
+    return () => {
+      clearInterval(interval);
+    };
   }, [authUser]);
 
   useEffect(() => {

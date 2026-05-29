@@ -13,6 +13,7 @@ export interface UserProfile {
   followers?: string[];
   following?: string[];
   createdAt: any;
+  lastActive?: any;
 }
 
 export interface MediaItem {
