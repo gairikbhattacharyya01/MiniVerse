@@ -240,13 +240,15 @@ export default function ConnectionsModal({ isOpen, onClose, userIds, title }: Co
                       
                       {/* Left: Avatar & Info */}
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-800 border-2 border-white/5 group-hover:border-indigo-500/50 transition-all shrink-0 relative flex items-center justify-center">
-                          {user.photoURL ? (
-                            <img src={user.photoURL} alt={user.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-base font-bold uppercase text-white/70">
-                              {user.name?.[0] || '?'}
-                            </span>
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-slate-800 border-2 border-white/5 group-hover:border-indigo-500/50 transition-all shrink-0 relative flex items-center justify-center select-none">
+                          <span className="text-base font-bold uppercase text-white/70">{user.name?.[0] || '?'}</span>
+                          {user.photoURL && (
+                            <img 
+                              src={user.photoURL} 
+                              alt={user.name} 
+                              className="absolute inset-0 w-full h-full object-cover" 
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
                           )}
                         </div>
                         <div className="min-w-0">

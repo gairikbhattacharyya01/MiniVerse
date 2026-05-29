@@ -277,11 +277,15 @@ export default function Layout({ user: authUser }: LayoutProps) {
                   }}
                   className="flex items-center gap-3 p-3 glass-hover cursor-pointer border-b border-white/5 last:border-b-0"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden shrink-0">
-                    {u.photoURL ? (
-                      <img src={u.photoURL} alt="" className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[10px] font-bold uppercase text-white">{u.name[0]}</div>
+                  <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden shrink-0 relative flex items-center justify-center">
+                    <span className="text-[10px] font-bold uppercase text-white">{u.name[0]}</span>
+                    {u.photoURL && (
+                      <img 
+                        src={u.photoURL} 
+                        alt="" 
+                        className="absolute inset-0 w-full h-full object-cover" 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
                     )}
                   </div>
                   <div className="min-w-0">
@@ -338,13 +342,15 @@ export default function Layout({ user: authUser }: LayoutProps) {
         {/* Footer info at bottom of mobile drawer */}
         <div className="mt-auto border-t border-white/5 pt-4 flex flex-col gap-3">
           <div className="glass p-3 rounded-2xl flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-slate-700 shrink-0 overflow-hidden">
-              {currentUserProfile?.photoURL ? (
-                <img src={currentUserProfile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-600 text-xs font-bold uppercase text-white/50">
-                  {currentUserProfile?.name?.[0] || authUser?.email?.[0]}
-                </div>
+            <div className="w-9 h-9 rounded-full bg-slate-700 shrink-0 overflow-hidden relative flex items-center justify-center">
+              <span className="text-xs font-bold uppercase text-white/50">{currentUserProfile?.name?.[0] || authUser?.email?.[0]}</span>
+              {currentUserProfile?.photoURL && (
+                <img 
+                  src={currentUserProfile.photoURL} 
+                  alt="Avatar" 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
               )}
             </div>
             <div className="flex-1 min-width-0">
@@ -401,11 +407,15 @@ export default function Layout({ user: authUser }: LayoutProps) {
                     }}
                     className="flex items-center gap-3 p-3 glass-hover cursor-pointer"
                   >
-                    <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden shrink-0">
-                      {u.photoURL ? (
-                        <img src={u.photoURL} alt="" className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center text-[10px] font-bold uppercase">{u.name[0]}</div>
+                    <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden shrink-0 relative flex items-center justify-center">
+                      <span className="text-[10px] font-bold uppercase text-slate-300">{u.name[0]}</span>
+                      {u.photoURL && (
+                        <img 
+                          src={u.photoURL} 
+                          alt="" 
+                          className="absolute inset-0 w-full h-full object-cover" 
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
                       )}
                     </div>
                     <div className="min-w-0">
@@ -472,13 +482,15 @@ export default function Layout({ user: authUser }: LayoutProps) {
 
         {/* User Card */}
         <div className="mt-auto glass p-2 xl:p-3 rounded-2xl flex items-center xl:gap-3 justify-center xl:justify-start">
-          <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0 overflow-hidden">
-            {currentUserProfile?.photoURL ? (
-              <img src={currentUserProfile.photoURL} alt="Avatar" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-600 text-sm font-bold uppercase text-white/50">
-                {currentUserProfile?.name?.[0] || authUser?.email?.[0]}
-              </div>
+          <div className="w-10 h-10 rounded-full bg-slate-700 shrink-0 overflow-hidden relative flex items-center justify-center">
+            <span className="text-sm font-bold uppercase text-white/50">{currentUserProfile?.name?.[0] || authUser?.email?.[0]}</span>
+            {currentUserProfile?.photoURL && (
+              <img 
+                src={currentUserProfile.photoURL} 
+                alt="Avatar" 
+                className="absolute inset-0 w-full h-full object-cover" 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
             )}
           </div>
           <div className="flex-1 min-width-0 xl:block hidden">

@@ -393,13 +393,15 @@ export default function Profile() {
         <div className="flex justify-between items-start mb-6">
           {/* Avatar - Twitter style overlapping */}
           <div className="relative -mt-16 md:-mt-20 ml-2 md:ml-4 z-10">
-            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden bg-slate-900 border-4 border-[#0f172a] relative group/photo">
-              {profile.photoURL ? (
-                <img src={profile.photoURL} alt={profile.name} className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-4xl font-bold bg-slate-700 uppercase">
-                  {profile.name?.[0]}
-                </div>
+            <div className="w-32 h-32 md:w-40 md:h-40 rounded-full overflow-hidden bg-slate-900 border-4 border-[#0f172a] relative group/photo flex items-center justify-center select-none">
+              <span className="text-4xl font-bold text-white/50 uppercase">{profile.name?.[0]}</span>
+              {profile.photoURL && (
+                <img 
+                  src={profile.photoURL} 
+                  alt={profile.name} 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
               )}
               {uploading && (
                 <div className="absolute inset-0 bg-[#0f172a]/70 flex items-center justify-center">
@@ -562,13 +564,15 @@ export default function Profile() {
               <div key={post.id} className="glass p-5 rounded-3xl group transition-all hover:bg-white/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="flex gap-4">
                   <Link to={`/profile/${post.userId}`} className="shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10">
-                      {post.photoURL ? (
-                        <img src={post.photoURL} alt={post.displayName} className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-slate-600 text-xs font-bold uppercase text-white/50">
-                          {post.displayName?.[0] || 'U'}
-                        </div>
+                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10 relative flex items-center justify-center">
+                      <span className="text-xs font-bold uppercase text-white/50">{post.displayName?.[0] || 'U'}</span>
+                      {post.photoURL && (
+                        <img 
+                          src={post.photoURL} 
+                          alt={post.displayName} 
+                          className="absolute inset-0 w-full h-full object-cover" 
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
                       )}
                     </div>
                   </Link>
@@ -618,13 +622,15 @@ export default function Profile() {
                         <div className="absolute top-0 bottom-0 left-0 w-1 bg-indigo-500/50"></div>
                         <div className="pl-2 space-y-1">
                           <div className="flex items-center gap-1.5 opacity-60 font-semibold text-white/90">
-                            <div className="w-4 h-4 rounded-full bg-slate-700 overflow-hidden">
-                              {parentPosts[post.postId].photoURL ? (
-                                <img src={parentPosts[post.postId].photoURL} alt="" className="w-full h-full object-cover" />
-                              ) : (
-                                <div className="w-full h-full flex items-center justify-center bg-slate-600 text-[6px] font-bold uppercase text-white/50">
-                                  {parentPosts[post.postId].displayName?.[0] || 'U'}
-                                </div>
+                            <div className="w-4 h-4 rounded-full bg-slate-700 overflow-hidden relative flex items-center justify-center">
+                              <span className="text-[6px] font-bold uppercase text-white/50">{parentPosts[post.postId].displayName?.[0] || 'U'}</span>
+                              {parentPosts[post.postId].photoURL && (
+                                <img 
+                                  src={parentPosts[post.postId].photoURL} 
+                                  alt="" 
+                                  className="absolute inset-0 w-full h-full object-cover" 
+                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                />
                               )}
                             </div>
                             <span>{parentPosts[post.postId].displayName}</span>

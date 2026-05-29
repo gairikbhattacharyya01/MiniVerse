@@ -103,13 +103,15 @@ export default function Home() {
       <div className="glass p-4 md:p-5 rounded-2xl md:rounded-3xl border-indigo-400/30">
         <div className="flex gap-4">
           <Link to={`/profile/${auth.currentUser?.uid}`} className="shrink-0">
-            <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden">
-              {auth.currentUser?.photoURL ? (
-                <img src={auth.currentUser.photoURL} alt="Me" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-600 text-sm font-bold uppercase text-white/50">
-                  {auth.currentUser?.displayName?.[0] || 'U'}
-                </div>
+            <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden relative flex items-center justify-center">
+              <span className="text-sm font-bold uppercase text-white/50">{auth.currentUser?.displayName?.[0] || 'U'}</span>
+              {auth.currentUser?.photoURL && (
+                <img 
+                  src={auth.currentUser.photoURL} 
+                  alt="Me" 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
               )}
             </div>
           </Link>

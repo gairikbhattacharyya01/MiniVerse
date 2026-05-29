@@ -269,13 +269,15 @@ export default function PostItem({ post }: PostItemProps) {
     >
       <div className="flex gap-4">
         <Link to={`/profile/${post.userId}`} className="shrink-0" onClick={(e) => e.stopPropagation()}>
-          <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden">
-            {post.photoURL ? (
-              <img src={post.photoURL} alt={post.displayName} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-slate-600 text-xs font-bold uppercase text-white/50">
-                {post.displayName?.[0] || 'U'}
-              </div>
+          <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden relative flex items-center justify-center">
+            <span className="text-xs font-bold uppercase text-white/50">{post.displayName?.[0] || 'U'}</span>
+            {post.photoURL && (
+              <img 
+                src={post.photoURL} 
+                alt={post.displayName} 
+                className="absolute inset-0 w-full h-full object-cover" 
+                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+              />
             )}
           </div>
         </Link>
@@ -460,13 +462,16 @@ export default function PostItem({ post }: PostItemProps) {
               {/* Header */}
               <header className="w-full bg-gradient-to-b from-slate-950/80 to-transparent p-6 flex items-center justify-between z-10 shrink-0" onClick={(e) => e.stopPropagation()}>
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden shrink-0">
-                    {post.photoURL ? (
-                      <img src={post.photoURL} alt={post.displayName} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-slate-700 text-xs font-bold uppercase text-white/50">
-                        {post.displayName?.[0] || 'U'}
-                      </div>
+                  <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 overflow-hidden shrink-0 relative flex items-center justify-center">
+                    <span className="text-xs font-bold uppercase text-white/50">{post.displayName?.[0] || 'U'}</span>
+                    {post.photoURL && (
+                      <img 
+                        src={post.photoURL} 
+                        alt={post.displayName} 
+                        className="absolute inset-0 w-full h-full object-cover" 
+                        referrerPolicy="no-referrer" 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
                     )}
                   </div>
                   <div className="flex flex-col text-left">
@@ -651,13 +656,15 @@ function CommentItem({ comment, postId, postOwnerId }: { comment: CommentType, p
   return (
     <div className="flex gap-3 text-sm group/comment">
       <Link to={`/profile/${comment.userId}`} className="shrink-0">
-        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
-          {comment.photoURL ? (
-            <img src={comment.photoURL} alt={comment.displayName} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-slate-600 text-[10px] font-bold uppercase text-white/50">
-              {comment.displayName?.[0] || 'U'}
-            </div>
+        <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden relative flex items-center justify-center">
+          <span className="text-[10px] font-bold uppercase text-white/50">{comment.displayName?.[0] || 'U'}</span>
+          {comment.photoURL && (
+            <img 
+              src={comment.photoURL} 
+              alt={comment.displayName} 
+              className="absolute inset-0 w-full h-full object-cover" 
+              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            />
           )}
         </div>
       </Link>

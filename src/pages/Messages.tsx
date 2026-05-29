@@ -207,8 +207,16 @@ export default function Messages() {
                   onClick={() => { setSelectedUser(user); setSearchResults([]); setSearchTerm(''); }}
                   className="p-3 glass-hover flex items-center gap-3 cursor-pointer"
                 >
-                  <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden shrink-0">
-                    {user.photoURL && <img src={user.photoURL} alt="" className="w-full h-full object-cover" />}
+                  <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden shrink-0 relative flex items-center justify-center">
+                    <span className="text-xs font-bold uppercase text-white/50">{user.name?.[0] || '?'}</span>
+                    {user.photoURL && (
+                      <img 
+                        src={user.photoURL} 
+                        alt="" 
+                        className="absolute inset-0 w-full h-full object-cover" 
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <div className="text-xs font-bold truncate">{user.name}</div>
@@ -230,11 +238,15 @@ export default function Messages() {
                 onClick={() => setSelectedUser(user)}
                 className={`flex gap-3 p-4 px-6 cursor-pointer transition-colors glass-hover ${selectedUser?.uid === user.uid ? 'bg-white/5' : ''}`}
               >
-                <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden shrink-0">
-                  {user.photoURL ? (
-                    <img src={user.photoURL} alt="" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center font-bold text-xs">{user.name[0]}</div>
+                <div className="w-12 h-12 rounded-full bg-slate-700 overflow-hidden shrink-0 relative flex items-center justify-center">
+                  <span className="text-xs font-bold uppercase text-white/50">{user.name[0]}</span>
+                  {user.photoURL && (
+                    <img 
+                      src={user.photoURL} 
+                      alt="" 
+                      className="absolute inset-0 w-full h-full object-cover" 
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -259,11 +271,15 @@ export default function Messages() {
         <div className={`flex-1 flex flex-col bg-[#0f172a]/50 ${selectedUser ? 'flex' : 'hidden md:flex'}`}>
           <header className="p-4 px-6 border-b border-white/10 flex items-center gap-4">
             <button onClick={() => setSelectedUser(null)} className="md:hidden p-2 -ml-2 rounded-full glass-hover"><ChevronLeft size={20}/></button>
-            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0">
-              {selectedUser.photoURL ? (
-                <img src={selectedUser.photoURL} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center font-bold">{selectedUser.name[0]}</div>
+            <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden shrink-0 relative flex items-center justify-center">
+              <span className="font-bold text-sm text-white/50">{selectedUser.name[0]}</span>
+              {selectedUser.photoURL && (
+                <img 
+                  src={selectedUser.photoURL} 
+                  alt="" 
+                  className="absolute inset-0 w-full h-full object-cover" 
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                />
               )}
             </div>
             <div>
