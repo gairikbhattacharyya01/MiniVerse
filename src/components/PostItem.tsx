@@ -415,6 +415,7 @@ export default function PostItem({ post }: PostItemProps) {
               postText={post.text} 
               userId={post.userId} 
               displayName={post.displayName} 
+              photoURL={post.photoURL}
             />
           </div>
 

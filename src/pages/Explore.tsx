@@ -30,6 +30,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import PostItem from '../components/PostItem';
+import ShareButton from '../components/ShareButton';
 
 
 // Interactive Cosmic, National, International & Indian News Articles Pool
@@ -1255,13 +1256,14 @@ export default function Explore() {
                   </div>
 
                   <div className="flex gap-2">
-                    <button 
-                      onClick={() => alert(`Submitting article reference links: ${selectedArticle.title}`)}
-                      className="p-1.5 hover:bg-white/5 border border-white/5 hover:border-white/10 rounded-xl text-slate-300 transition-colors"
-                      title="Share Article"
-                    >
-                      <Share2 size={13} />
-                    </button>
+                    <ShareButton 
+                      postId={selectedArticle.id}
+                      postText={selectedArticle.excerpt || selectedArticle.title}
+                      userId="cosmonews"
+                      displayName={selectedArticle.category ? selectedArticle.category.split(' • ')[0] : 'Cosmic News'}
+                      photoURL={selectedArticle.image}
+                      isArticle={true}
+                    />
                   </div>
                 </div>
 
