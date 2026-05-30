@@ -18,6 +18,7 @@ import {
   increment
 } from 'firebase/firestore';
 import { updateProfile } from 'firebase/auth';
+import { motion, AnimatePresence } from 'motion/react';
 import { auth, db, uploadToCloudinary, createNotification, handleFirestoreError, OperationType } from '../lib/firebase';
 import Logo from '../components/Logo';
 import ShareButton from '../components/ShareButton';
@@ -41,7 +42,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-type TabType = 'posts' | 'reposts' | 'replies' | 'media' | 'likes';
+type TabType = 'posts' | 'reposts' | 'media' | 'likes';
 
 export default function Profile() {
   const { userId } = useParams();
@@ -65,17 +66,7 @@ export default function Profile() {
   const [editState, setEditState] = useState('');
   const [uploading, setUploading] = useState(false);
 
-  // Cached parent posts for replies tab
-  const [parentPosts, setParentPosts] = useState<Record<string, any>>({});
-  const fetchedParentIdsRef = React.useRef<Set<string>>(new Set());
-
   const isOwnProfile = auth.currentUser?.uid === userId;
-
-  useEffect(() => {
-    // Reset cache on userId change
-    fetchedParentIdsRef.current.clear();
-    setParentPosts({});
-  }, [userId]);
 
   useEffect(() => {
     // Scroll to top on mount
@@ -137,20 +128,27 @@ export default function Profile() {
       case 'likes':
         q = query(postsRef, where('likes', 'array-contains', userId));
         break;
-      case 'replies':
-        // Collection group query for comments by this user
-        q = query(collectionGroup(db, 'comments'), where('userId', '==', userId));
-        break;
       default:
         q = query(postsRef, where('userId', '==', userId));
     }
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      let data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        _path: doc.ref.path,
-        ...doc.data()
-      }));
+      let data = snapshot.docs.map(doc => {
+        const docData = doc.data();
+        let postId = docData.postId;
+        if (!postId && doc.ref.path.includes('/comments/')) {
+          const parts = doc.ref.path.split('/');
+          if (parts[1]) {
+            postId = parts[1];
+          }
+        }
+        return {
+          id: doc.id,
+          _path: doc.ref.path,
+          postId,
+          ...docData
+        };
+      });
 
       // Client-side filtering
       if (activeTab === 'posts') {
@@ -174,42 +172,6 @@ export default function Profile() {
 
     return unsubscribe;
   }, [userId, activeTab]);
-
-  useEffect(() => {
-    if (activeTab !== 'replies' || posts.length === 0) return;
-
-    const fetchParentPosts = async () => {
-      const uniquePostIds = Array.from(new Set(posts.map(p => p.postId).filter(Boolean))) as string[];
-      const toFetch = uniquePostIds.filter(pId => !fetchedParentIdsRef.current.has(pId));
-      if (toFetch.length === 0) return;
-
-      toFetch.forEach(pId => fetchedParentIdsRef.current.add(pId));
-
-      const fetchedResults: Record<string, any> = {};
-      let updated = false;
-
-      await Promise.all(toFetch.map(async (pId) => {
-        try {
-          const postDoc = await getDoc(doc(db, 'posts', pId));
-          if (postDoc.exists()) {
-            fetchedResults[pId] = { id: postDoc.id, ...postDoc.data() };
-            updated = true;
-          }
-        } catch (err) {
-          console.error("Error fetching parent post:", pId, err);
-        }
-      }));
-
-      if (updated) {
-        setParentPosts(prev => ({
-          ...prev,
-          ...fetchedResults
-        }));
-      }
-    };
-
-    fetchParentPosts();
-  }, [posts, activeTab]);
 
   const handleFollow = async () => {
     if (!auth.currentUser || !userId) return;
@@ -314,9 +276,10 @@ export default function Profile() {
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  const handleDelete = async (post: any) => {
-    const isComment = activeTab === 'replies';
+  const handleDelete = async (e: React.MouseEvent, post: any) => {
+    e.stopPropagation();
     const identifier = post._path || `posts/${post.id}`;
+    const isComment = identifier.includes('/comments/');
     
     if (confirmDeleteId !== identifier) {
       setConfirmDeleteId(identifier);
@@ -540,7 +503,7 @@ export default function Profile() {
 
       {/* Tabs */}
       <div className="flex border-b border-white/10 bg-[#0f172a] sticky top-0 z-10 overflow-x-auto scroller-hidden">
-        {(['posts', 'reposts', 'replies', 'media', 'likes'] as TabType[]).map((tab) => (
+        {(['posts', 'reposts', 'media', 'likes'] as TabType[]).map((tab) => (
           <button 
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -556,122 +519,13 @@ export default function Profile() {
       {/* Feed */}
       <div className="p-6 space-y-4">
         {posts.length > 0 ? (
-          posts.map(post => {
-            if (activeTab !== 'replies') {
-              return <PostItem key={post.id} post={post as any} />;
-            }
-            return (
-              <div key={post.id} className="glass p-5 rounded-3xl group transition-all hover:bg-white/5 animate-in fade-in slide-in-from-bottom-2 duration-300">
-                <div className="flex gap-4">
-                  <Link to={`/profile/${post.userId}`} className="shrink-0">
-                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden border border-white/10 relative flex items-center justify-center">
-                      <span className="text-xs font-bold uppercase text-white/50">{post.displayName?.[0] || 'U'}</span>
-                      {post.photoURL && (
-                        <img 
-                          src={post.photoURL} 
-                          alt={post.displayName} 
-                          className="absolute inset-0 w-full h-full object-cover" 
-                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                        />
-                      )}
-                    </div>
-                  </Link>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                          <Link to={`/profile/${post.userId}`} className="font-bold text-white hover:underline">{post.displayName}</Link>
-                          <span className="text-xs opacity-50">· {post.createdAt ? (post.createdAt.toDate ? formatDistanceToNow(post.createdAt.toDate()) : 'just now') : 'just now'}</span>
-                        </div>
-                        {post.isRepost && (
-                          <div className="flex items-center gap-1 text-[10px] text-green-500 font-bold">
-                            <Repeat size={10} />
-                            <span>Reposted from {post.originalPostAuthor}</span>
-                          </div>
-                        )}
-                        {activeTab === 'replies' && post.postId && parentPosts[post.postId] && (
-                          <span className="text-xs text-white/40 font-medium mt-0.5">
-                            Replying to{' '}
-                            <Link to={`/profile/${parentPosts[post.postId].userId}`} className="text-indigo-400 hover:underline">
-                              @{parentPosts[post.postId].displayName || 'someone'}
-                            </Link>
-                          </span>
-                        )}
-                      </div>
-                      {(post.userId === auth.currentUser?.uid || post.postOwnerId === auth.currentUser?.uid) && (
-                        <button 
-                          onClick={() => handleDelete(post)}
-                          className={`chip font-bold transition-all ${
-                            confirmDeleteId === (post._path || `posts/${post.id}`) 
-                              ? 'text-red-500 bg-red-500/20 px-3 py-1 rounded-full text-xs animate-pulse font-bold' 
-                              : 'text-red-500/60 hover:text-red-500'
-                          }`}
-                          title="Delete"
-                        >
-                          {confirmDeleteId === (post._path || `posts/${post.id}`) ? 'Confirm Delete?' : '🗑'}
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Quoted parent post if this is a reply */}
-                    {activeTab === 'replies' && post.postId && parentPosts[post.postId] && (
-                      <div 
-                        onClick={() => navigate('/')} 
-                        className="mt-3 mb-2 bg-white/5 border border-white/10 rounded-2xl p-3 text-xs relative overflow-hidden hover:bg-white/10 transition-all cursor-pointer"
-                      >
-                        <div className="absolute top-0 bottom-0 left-0 w-1 bg-indigo-500/50"></div>
-                        <div className="pl-2 space-y-1">
-                          <div className="flex items-center gap-1.5 opacity-60 font-semibold text-white/90">
-                            <div className="w-4 h-4 rounded-full bg-slate-700 overflow-hidden relative flex items-center justify-center">
-                              <span className="text-[6px] font-bold uppercase text-white/50">{parentPosts[post.postId].displayName?.[0] || 'U'}</span>
-                              {parentPosts[post.postId].photoURL && (
-                                <img 
-                                  src={parentPosts[post.postId].photoURL} 
-                                  alt="" 
-                                  className="absolute inset-0 w-full h-full object-cover" 
-                                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                />
-                              )}
-                            </div>
-                            <span>{parentPosts[post.postId].displayName}</span>
-                          </div>
-                          <p className="opacity-70 line-clamp-2 leading-relaxed text-slate-300">
-                            {parentPosts[post.postId].text}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    <p className="mt-2 text-[15px] opacity-90 leading-relaxed whitespace-pre-wrap text-white">
-                      <MentionText text={post.text || post.comment || ''} />
-                    </p>
-                    {post.mediaItems && post.mediaItems.length > 0 ? (
-                      <div className={`mt-3 grid gap-2 ${post.mediaItems.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                        {post.mediaItems.map((item: any, idx: number) => (
-                          <div key={idx} className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
-                            {item.type === 'video' ? (
-                              <video src={item.url} controls className="w-full h-auto max-h-[300px] object-cover" />
-                            ) : (
-                              <img src={item.url} alt="content" className="w-full h-auto max-h-[300px] object-cover hover:scale-105 transition-transform duration-500" />
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    ) : post.media && (
-                      <div className="mt-3 overflow-hidden rounded-2xl border border-white/10">
-                        <img src={post.media} alt="content" className="w-full h-auto max-h-[450px] object-cover hover:scale-105 transition-transform duration-500" />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })
+          posts.map(post => (
+            <PostItem key={post.id} post={post as any} />
+          ))
         ) : (
           <div className="py-20 text-center opacity-40 italic flex flex-col items-center gap-3">
             <span className="text-4xl text-white/10 font-black uppercase tracking-tighter">Empty Space</span>
             <p>No signals found in this frequency.</p>
-            {activeTab === 'replies' && <p className="text-xs text-white/20 not-italic">(Check if you have any interactions yet)</p>}
           </div>
         )}
       </div>

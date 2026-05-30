@@ -39,6 +39,8 @@ const GRADIENTS = [
   {
     id: 'cosmic',
     name: 'Cosmic Tint',
+    tag: 'CYBER',
+    desc: 'Deep nebular aura with starlight violet and magenta pulses.',
     colors: ['#4f46e5', '#9333ea', '#db2777'],
     canvasColors: ['rgba(79, 70, 229, 1)', 'rgba(147, 51, 234, 1)', 'rgba(219, 39, 119, 1)'],
     cssClass: 'from-[#4f46e5] via-[#9333ea] to-[#db2777]'
@@ -46,6 +48,8 @@ const GRADIENTS = [
   {
     id: 'boreal',
     name: 'Solar Boreal',
+    tag: 'AURORA',
+    desc: 'Electric emerald and deep lagoon currents matching the polar sky.',
     colors: ['#0d9488', '#0891b2', '#059669'],
     canvasColors: ['rgba(13, 148, 136, 1)', 'rgba(8, 145, 178, 1)', 'rgba(5, 150, 105, 1)'],
     cssClass: 'from-[#0d9488] via-[#0891b2] to-[#059669]'
@@ -53,6 +57,8 @@ const GRADIENTS = [
   {
     id: 'flare',
     name: 'Solar Flare',
+    tag: 'FIERY',
+    desc: 'Intense thermonuclear plasma radiation with blazing amber layers.',
     colors: ['#f59e0b', '#ea580c', '#dc2626'],
     canvasColors: ['rgba(245, 158, 11, 1)', 'rgba(234, 88, 12, 1)', 'rgba(220, 38, 38, 1)'],
     cssClass: 'from-[#f59e0b] via-[#ea580c] to-[#dc2626]'
@@ -60,13 +66,44 @@ const GRADIENTS = [
   {
     id: 'cyberpunk',
     name: 'Neon Horizon',
+    tag: 'TOKYO',
+    desc: 'Synthesizer high-frequency neon violet blended with grid blue dust.',
     colors: ['#7c3aed', '#db2777', '#2563eb'],
     canvasColors: ['rgba(124, 58, 237, 1)', 'rgba(219, 39, 119, 1)', 'rgba(37, 99, 235, 1)'],
     cssClass: 'from-[#7c3aed] via-[#db2777] to-[#2563eb]'
   },
   {
+    id: 'glacier',
+    name: 'Frozen Glacier',
+    tag: 'POLAR',
+    desc: 'Crystalline zero-kelvin cyan shimmer paired with diamond sapphire layers.',
+    colors: ['#06b6d4', '#3b82f6', '#1d4ed8'],
+    canvasColors: ['rgba(6, 182, 212, 1)', 'rgba(59, 130, 246, 1)', 'rgba(29, 78, 216, 1)'],
+    cssClass: 'from-[#06b6d4] via-[#3b82f6] to-[#1d4ed8]'
+  },
+  {
+    id: 'acid',
+    name: 'Acid Matrix',
+    tag: 'GRID',
+    desc: 'Luminous electromagnetic lime merged with radioactive digital jade.',
+    colors: ['#a3e635', '#10b981', '#064e3b'],
+    canvasColors: ['rgba(163, 230, 53, 1)', 'rgba(16, 185, 129, 1)', 'rgba(6, 78, 59, 1)'],
+    cssClass: 'from-[#a3e635] via-[#10b981] to-[#064e3b]'
+  },
+  {
+    id: 'sunset',
+    name: 'Sunset Eclipse',
+    tag: 'DUSK',
+    desc: 'Ethereal atmosphere of fading coral red, pink cotton clouds, and gold sunset dusk.',
+    colors: ['#f43f5e', '#ec4899', '#f97316'],
+    canvasColors: ['rgba(244, 63, 94, 1)', 'rgba(236, 72, 153, 1)', 'rgba(249, 115, 22, 1)'],
+    cssClass: 'from-[#f43f5e] via-[#ec4899] to-[#f97316]'
+  },
+  {
     id: 'shadow',
     name: 'Nebula Void',
+    tag: 'VOID',
+    desc: 'Deep galactic supermassive blackhole core containing obsidian dust particles.',
     colors: ['#1e1b4b', '#111827', '#311042'],
     canvasColors: ['rgba(30, 27, 75, 1)', 'rgba(17, 24, 39, 1)', 'rgba(49, 16, 66, 1)'],
     cssClass: 'from-[#1e1b4b] via-[#111827] to-[#311042]'
@@ -167,7 +204,7 @@ export default function ShareButton({
   useEffect(() => {
     if (!isOpen) return;
 
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&color=255-255-255&bgcolor=15-23-42&data=${encodeURIComponent(postUrl)}`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=500x500&color=255-255-255&bgcolor=15-23-42&data=${encodeURIComponent(postUrl)}`;
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.src = qrUrl;
@@ -445,7 +482,7 @@ export default function ShareButton({
 
     // Content Text
     const contentX = cardX + 54;
-    const maxContentWidth = cardWidth - 340; // Reduced to fit larger QR code elegantly to its right!
+    const maxContentWidth = cardWidth - 380; // Reduced to fit even larger, prominent QR code elegantly to its right!
 
     // Word Wrap Implementation finding lines first for dynamic sizing & alignment
     const getWrappedLines = (c: CanvasRenderingContext2D, txt: string, maxWidth: number) => {
@@ -507,8 +544,8 @@ export default function ShareButton({
     }
 
     // QR Code Drawing (Embedded within the card itself!) - Upgraded and enlarged!
-    const qrWidth = 150;
-    const qrHeight = 150;
+    const qrWidth = 190;
+    const qrHeight = 190;
     const qrX = cardX + cardWidth - 54 - qrWidth; // Align with the right margin of the card
     const qrY = cardY + 54; // Align with the avatar height on the right side
 
@@ -565,6 +602,9 @@ export default function ShareButton({
     if (preloadedQR) {
       // Draw actual QR Code inside the panel, with slight rounded borders
       ctx.save();
+      
+      // Ensure high quality crisp QR rendering without blurry interpolation
+      ctx.imageSmoothingEnabled = false;
       
       // Let's draw a rounded clip for the QR code image
       ctx.beginPath();
@@ -795,15 +835,38 @@ export default function ShareButton({
                         </div>
                       </div>
  
-                      {/* Matching QR Code alignment inside Mockup - Enlarged for beautiful high fidelity */}
-                      <div className="flex flex-col items-center gap-1 bg-[#070e1b] rounded-lg p-1.5 border shrink-0 scale-95 sm:scale-100 origin-top-right relative shadow-lg transition-colors duration-500" style={{ borderColor: `${currGrad.colors[1] || currGrad.colors[0]}33` }}>
+                      {/* Matching QR Code alignment inside Mockup - Enlarged with glowing border and subtle pulse */}
+                      <div 
+                        className="flex flex-col items-center gap-1 bg-[#070e1b] rounded-lg p-1.5 border shrink-0 scale-95 sm:scale-100 origin-top-right relative transition-all duration-500 group/qr" 
+                        style={{ 
+                          borderColor: `${currGrad.colors[1] || currGrad.colors[0]}66`,
+                          boxShadow: `0 0 15px ${(currGrad.colors[1] || currGrad.colors[0])}25`
+                        }}
+                      >
+                        {/* Dynamic pulsing glow background ring */}
+                        <div 
+                          className="absolute -inset-0.5 rounded-lg opacity-30 blur-sm animate-pulse transition-opacity duration-500 group-hover/qr:opacity-50 -z-10"
+                          style={{
+                            background: `linear-gradient(135deg, ${currGrad.colors[0]}, ${currGrad.colors[1] || currGrad.colors[0]})`
+                          }}
+                        />
+
+                        {/* Floating "SCAN ME" badge with pinging element */}
+                        <div 
+                          className="absolute -top-2 left-1/2 -translate-x-1/2 bg-slate-950 border px-1.5 py-0.5 rounded-full flex items-center gap-1 shadow-lg transition-colors duration-500 z-10 animate-bounce"
+                          style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }}
+                        >
+                          <span className="w-1 h-1 rounded-full animate-ping shrink-0" style={{ backgroundColor: currGrad.colors[1] || currGrad.colors[0] }} />
+                          <span className="text-[5px] font-black tracking-widest text-[#00ffd5] leading-none">SCAN ME</span>
+                        </div>
+
                         {/* Aperture corner marks */}
                         <div className="absolute top-0 left-0 w-1 h-1 border-t border-l transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
                         <div className="absolute top-0 right-0 w-1 h-1 border-t border-r transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
                         <div className="absolute bottom-0 left-0 w-1 h-1 border-b border-l transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
                         <div className="absolute bottom-0 right-0 w-1 h-1 border-b border-r transition-colors duration-500" style={{ borderColor: currGrad.colors[1] || currGrad.colors[0] }} />
 
-                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded overflow-hidden">
+                        <div className="relative w-14 h-14 sm:w-18 sm:h-18 rounded overflow-hidden">
                           <img 
                             src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&color=255-255-255&bgcolor=7-14-27&data=${encodeURIComponent(postUrl)}`} 
                             alt="Live Post QR Code" 
@@ -836,26 +899,82 @@ export default function ShareButton({
                     </div>
                   </div>
 
-                  {/* Gradient preset selectors */}
+                  {/* QR Scan Concise Instruction */}
+                  <div className="mt-3 text-center px-1">
+                    <p className="text-[11px] text-slate-400 font-medium leading-relaxed">
+                      Scan this QR code with your mobile device to view this profile directly on MiniVerse.
+                    </p>
+                  </div>
+
+                  {/* Gradient preset customizer suite */}
                   <div className="mt-4">
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-2">Select Theme Skin</span>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {GRADIENTS.map((g) => (
-                        <button 
-                          key={g.id}
-                          onClick={() => setActiveGradient(g.id)}
-                          className={`w-6 h-6 rounded-full bg-gradient-to-br ${g.cssClass} transition-all duration-200 shrink-0 relative cursor-pointer ${
-                            activeGradient === g.id ? 'ring-2 ring-indigo-400 scale-110 shadow-md' : 'hover:scale-105 opacity-80'
-                          }`}
-                          title={g.name}
-                        >
-                          {activeGradient === g.id && (
-                            <span className="absolute inset-0 flex items-center justify-center">
-                              <span className="w-1.5 h-1.5 bg-white rounded-full" />
-                            </span>
-                          )}
-                        </button>
-                      ))}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider block">Select Theme Skin</span>
+                        <span className="text-xs font-black text-indigo-400 mt-0.5 leading-none">{currGrad.name}</span>
+                      </div>
+                      <span className="text-[9px] bg-indigo-500/10 border border-indigo-500/20 px-2.5 py-0.5 rounded-full font-mono text-indigo-300 font-black tracking-widest">{currGrad.tag}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {GRADIENTS.map((g) => {
+                        const isSelected = activeGradient === g.id;
+                        return (
+                          <button 
+                            key={g.id}
+                            onClick={() => setActiveGradient(g.id)}
+                            className={`group/btn relative flex items-center justify-between p-2.5 rounded-xl border bg-slate-900/60 hover:bg-slate-900/90 text-left transition-all duration-300 cursor-pointer overflow-hidden ${
+                              isSelected 
+                                ? 'border-indigo-500/50 shadow-[0_0_12px_rgba(99,102,241,0.15)] bg-slate-950/40' 
+                                : 'border-white/5 hover:border-white/15'
+                            }`}
+                          >
+                            {/* Hover background color glow overlay */}
+                            <div className={`absolute inset-0 bg-gradient-to-r ${g.cssClass} opacity-0 group-hover/btn:opacity-[0.03] transition-opacity duration-300`} />
+                            
+                            <div className="flex items-center gap-2 z-10 min-w-0">
+                              {/* Rounded miniature preview */}
+                              <div className="relative w-5 h-5 rounded-full shrink-0 flex items-center justify-center">
+                                <div className={`absolute inset-0 rounded-full bg-gradient-to-br ${g.cssClass}`} />
+                                {isSelected && (
+                                  <span className="w-1.5 h-1.5 bg-white rounded-full z-10" />
+                                )}
+                              </div>
+                              
+                              <div className="min-w-0 flex flex-col">
+                                <span className={`text-[10.5px] font-black tracking-tight leading-none truncate ${isSelected ? 'text-white' : 'text-slate-400 group-hover/btn:text-slate-200'}`}>
+                                  {g.name}
+                                </span>
+                                <span className="text-[7px] text-slate-500 font-mono font-medium tracking-wider mt-px uppercase leading-none">
+                                  {g.tag}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Verification marker or spot */}
+                            <div className="z-10 shrink-0 ml-1">
+                              {isSelected ? (
+                                <div className="w-3 h-3 rounded-full flex items-center justify-center bg-indigo-500/20 border border-indigo-400/40">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-[#00ffd5]" />
+                                </div>
+                              ) : (
+                                <div className="w-3 h-3 rounded-full border border-white/10 group-hover/btn:border-white/20 transition-colors" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Interactive Atmospheric Card detail overlay */}
+                    <div className="mt-2.5 p-3.5 rounded-xl border border-white/5 bg-[#030712] relative overflow-hidden transition-all duration-300">
+                      <div className="absolute top-0 bottom-0 left-0 w-1 bg-gradient-to-b transition-all duration-500" style={{ background: `linear-gradient(to bottom, ${currGrad.colors[0]}, ${currGrad.colors[1] || currGrad.colors[0]})` }} />
+                      <div className="pl-1.5">
+                        <span className="text-[8px] text-slate-500 font-mono tracking-widest block uppercase font-bold">ATMOSPHERIC RE-ENTRY METRIC</span>
+                        <p className="text-[11px] text-slate-300 font-medium leading-relaxed mt-0.5">
+                          {currGrad.desc}
+                        </p>
+                      </div>
                     </div>
                   </div>
 
